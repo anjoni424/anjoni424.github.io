@@ -343,6 +343,10 @@ function loadLog(){
 function saveLog(log){
   localStorage.setItem('bjCaseLog', JSON.stringify(log));
 }
+  // After the first calculation of a hand, mark it as no longer the first decision
+  document.getElementById('isFirstTwo').checked = false;
+
+}
 function clearSession(){
   localStorage.removeItem('bjCaseLog');
   renderStats();
@@ -350,6 +354,11 @@ function clearSession(){
   const r = document.getElementById('result');
   r.style.display='none';
   r.innerHTML='';
+    // ✅ Reset for a fresh hand
+  document.getElementById('playerHand').value = '';
+  document.getElementById('dealerHand').value = '';
+  document.getElementById('isFirstTwo').checked = true;
+
   alert('Session memory cleared.');
 }
 
@@ -457,19 +466,30 @@ function renderStats(){
 
 function recordOutcome(outcome){
   const log = loadLog();
+
   // attach to most recent calculation that has no outcome
   for(let i=log.length-1;i>=0;i--){
     if(!log[i].outcome){
       log[i].outcome = outcome;
       saveLog(log);
+
+      // ✅ QoL: reset inputs for the next hand
+      document.getElementById('playerHand').value = '';
+      document.getElementById('dealerHand').value = '';
+
+      // ✅ QoL: make next calc "first decision" again
+      document.getElementById('isFirstTwo').checked = true;
+
       renderStats();
       renderHud();
       alert('Outcome saved to most recent calculation.');
       return;
     }
   }
+
   alert('No pending calculation found. Run a calculation first, then record the result.');
 }
+
 
 /* =========================================================
    MAIN ANALYZE
