@@ -3,224 +3,623 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blackjack Detective</title>
+  <title>Blackjack Detective (S17 • DAS • Split Once)</title>
   <style>
-    body {
-      background: #222;
-      color: #eee;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+    :root{
+      --bg:#222; --panel:#2f2f2f; --panel2:#3b3b3b; --text:#eee; --muted:#bdbdbd;
+      --accent:#8a2be2; --accent2:#a55ced; --good:#37d67a; --bad:#ff5c5c;
+      --chip:#1c1c1c;
     }
-    header {
-      background: #111;
-      width: 100%;
-      padding: 20px 0;
-      text-align: center;
-      border-bottom: 3px solid #8a2be2;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2rem;
-      color: #8a2be2;
-    }
-    .container {
-      margin-top: 30px;
-      width: 90%;
-      max-width: 800px;
-      background: #333;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      padding: 20px;
-    }
-    .section {
-      margin-bottom: 25px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
-    button {
-      background: #8a2be2;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      padding: 10px 20px;
-      cursor: pointer;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
-    button:hover {
-      background: #a55ced;
-    }
-    .result {
-      margin-top: 15px;
-      background: #444;
-      padding: 10px;
-      border-radius: 4px;
-    }
-    .stats {
-      margin-top: 15px;
-      background: #444;
-      padding: 10px;
-      border-radius: 4px;
-    }
+    body{ background:var(--bg); color:var(--text); font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif; margin:0; }
+    header{ background:#111; border-bottom:3px solid var(--accent); padding:18px 0; text-align:center; }
+    header h1{ margin:0; color:var(--accent); font-size:1.9rem; }
+    header p{ margin:6px 0 0; color:var(--muted); }
+    .wrap{ width:92%; max-width:980px; margin:22px auto 40px; }
+    .grid{ display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; }
+    .card{ background:var(--panel); border-radius:10px; box-shadow:0 8px 18px rgba(0,0,0,.35); padding:16px; }
+    .card h2{ margin:0 0 12px; font-size:1.1rem; }
+    label{ display:block; font-weight:700; margin:10px 0 6px; }
+    input[type="text"]{ width:100%; padding:10px; border:none; border-radius:8px; outline:none; background:#eee; color:#111; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .pill{ background:var(--panel2); color:var(--text); border-radius:999px; padding:8px 10px; display:flex; align-items:center; gap:8px; }
+    .pill input{ transform:scale(1.05); }
+    .btn{ background:var(--accent); border:none; border-radius:10px; color:#fff; padding:10px 14px; cursor:pointer; font-weight:800; }
+    .btn:hover{ background:var(--accent2); }
+    .btn.ghost{ background:#444; }
+    .btn.ghost:hover{ background:#555; }
+    .btn.good{ background:#1f7a4a; }
+    .btn.good:hover{ background:#2a9960; }
+    .btn.bad{ background:#7a2a2a; }
+    .btn.bad:hover{ background:#9b3737; }
+    .divider{ height:1px; background:rgba(255,255,255,.08); margin:14px 0; }
+    .result{ background:var(--panel2); border-radius:10px; padding:12px; }
+    .kpi{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .kpi .box{ background:#2a2a2a; border-radius:10px; padding:10px; }
+    .kpi .box .t{ color:var(--muted); font-size:.85rem; }
+    .kpi .box .v{ font-size:1.25rem; font-weight:900; margin-top:4px; }
+    .tag{ display:inline-block; padding:5px 9px; border-radius:999px; font-weight:800; font-size:.85rem; }
+    .tag.good{ background:rgba(55,214,122,.15); color:var(--good); }
+    .tag.bad{ background:rgba(255,92,92,.15); color:var(--bad); }
+    .tag.neutral{ background:rgba(138,43,226,.18); color:#d7b8ff; }
+    .actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .act{ background:#3a3a3a; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; font-weight:900; }
+    .act small{ color:var(--muted); font-weight:700; display:block; margin-top:2px; }
+    .hud{ margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; }
+    .hud .chip{ background:var(--chip); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px; }
+    .hud .chip b{ color:#fff; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🔍 Blackjack Detective</h1>
-    <p>Investigate your odds like a pro card shark</p>
-  </header>
-  <div class="container">
-    <div class="section">
-      <h2>Input Hands</h2>
-      <label for="player-hand">Your Hand (comma-separated e.g. "A, K" or "10, 7, 4")</label>
-      <input id="player-hand" type="text" placeholder="Enter your cards" />
-      <label for="dealer-hand">Dealer's Visible Hand (comma-separated e.g. "9" or "A")</label>
-      <input id="dealer-hand" type="text" placeholder="Enter dealer's cards" />
-      <button onclick="calculateOdds()">Calculate Odds</button>
-    </div>
-    <div id="result" class="result" style="display: none;"></div>
-    <div class="section">
+<header>
+  <h1>🔍 Blackjack Detective</h1>
+  <p>Rules: Unlimited decks • Split once • No hit split aces • Double any first 2 • Double after split • Dealer stands soft 17</p>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <div class="card">
+      <h2>Enter the Case</h2>
+
+      <label>Your Hand (comma-separated)</label>
+      <input id="playerHand" type="text" placeholder='Example: "A, 7" or "10, 6"' />
+
+      <label>Dealer Up Card (or visible cards)</label>
+      <input id="dealerHand" type="text" placeholder='Example: "A" or "9"' />
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <span class="pill"><input id="isFirstTwo" type="checkbox" checked /> First decision (first 2 cards)</span>
+        <span class="pill"><input id="hasSplit" type="checkbox" /> Already split (so no more splits)</span>
+        <span class="pill"><input id="isSplitAces" type="checkbox" /> This hand is split aces (no hitting)</span>
+        <span class="pill"><input id="wantInsurance" type="checkbox" /> Considering insurance</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <button class="btn" onclick="analyze()">Calculate + Recommend</button>
+        <button class="btn ghost" onclick="clearSession()">Clear Session Memory</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="result" class="result" style="display:none;"></div>
+
+      <div class="divider"></div>
+
       <h2>Record Outcome</h2>
-      <button onclick="recordResult('win')">I Won</button>
-      <button onclick="recordResult('loss')">I Lost</button>
+      <div class="row">
+        <button class="btn good" onclick="recordOutcome('win')">Won ✅</button>
+        <button class="btn bad" onclick="recordOutcome('loss')">Lost ❌</button>
+        <button class="btn ghost" onclick="recordOutcome('push')">Push 🤝</button>
+      </div>
+      <div class="hud" id="sessionHud"></div>
     </div>
-    <div id="stats" class="stats" style="display: none;"></div>
+
+    <div class="card">
+      <h2>Detective Notebook</h2>
+      <div id="stats" class="result"></div>
+      <div class="divider"></div>
+      <div class="result">
+        <div class="mono" style="opacity:.9;">
+          <b>How memory works:</b><br/>
+          Every time you calculate, we log the odds + recommendation.<br/>
+          When you record Win/Loss/Push, we attach the result to the most recent calc.<br/>
+          Then we show whether certain odds ranges / recommendations have been “working for you.”
+        </div>
+      </div>
+    </div>
   </div>
-  <script>
-    function parseCard(card) {
-      card = card.trim().toUpperCase();
-      if (card === 'A') return { value: 11, alt: 1, isAce: true };
-      if (['J','Q','K'].includes(card)) return { value: 10, alt: 10 };
-      const num = parseInt(card);
-      if (!isNaN(num) && num >= 2 && num <= 10) return { value: num, alt: num };
-      return null;
-    }
-    function handValue(cards) {
-      let totals = [0];
-      cards.forEach(card => {
-        const newTotals = [];
-        totals.forEach(tot => {
-          newTotals.push(tot + (card.isAce ? 11 : card.value));
-          if (card.isAce) newTotals.push(tot + 1);
-        });
-        totals = newTotals;
-      });
-      return [...new Set(totals)];
-    }
-    function countRemaining(cardsInPlay) {
-      const counts = {
-        '2': 4, '3': 4, '4': 4, '5': 4, '6': 4, '7': 4, '8': 4, '9': 4,
-        '10': 4, 'J': 4, 'Q': 4, 'K': 4, 'A': 4
-      };
-      cardsInPlay.forEach(card => {
-        const name = card.original.toUpperCase();
-        if (counts[name] > 0) counts[name]--;
-      });
-      return counts;
-    }
-    function totalCards(counts) {
-      return Object.values(counts).reduce((a, b) => a + b, 0);
-    }
-    function calculateOdds() {
-      const playerInput = document.getElementById('player-hand').value;
-      const dealerInput = document.getElementById('dealer-hand').value;
-      if (!playerInput) { alert('Please enter your cards.'); return; }
-      const playerCards = [];
-      const allCards = [];
-      playerInput.split(',').forEach(str => {
-        const card = parseCard(str);
-        if (card) {
-          playerCards.push(card);
-          allCards.push({ ...card, original: str.trim() });
-        }
-      });
-      dealerInput.split(',').forEach(str => {
-        if (!str.trim()) return;
-        const card = parseCard(str);
-        if (card) {
-          allCards.push({ ...card, original: str.trim() });
-        }
-      });
-      if (!playerCards.length) { alert('No valid player cards found.'); return; }
-      const playerTotals = handValue(playerCards);
-      const counts = countRemaining(allCards);
-      const totalRemainingCards = totalCards(counts);
-      let bustProb = 0;
-      let blackjackProb = 0;
-      for (const cardName in counts) {
-        const count = counts[cardName];
-        if (count <= 0) continue;
-        const cardObj = parseCard(cardName);
-        let bustCases = 0;
-        let bjCases = 0;
-        playerTotals.forEach(pt => {
-          if (cardObj.isAce) {
-            const t1 = pt + 11;
-            const t2 = pt + 1;
-            [t1, t2].forEach(tv => {
-              if (tv > 21) bustCases++;
-              if (tv === 21) bjCases++;
-            });
-          } else {
-            const t = pt + cardObj.value;
-            if (t > 21) bustCases++;
-            if (t === 21) bjCases++;
-          }
-        });
-        const p = count / totalRemainingCards;
-        if (bustCases > 0) bustProb += p;
-        if (bjCases > 0) blackjackProb += p;
+</div>
+
+<script>
+/* =========================================================
+   RULES IMPLEMENTED
+   - Unlimited decks: use infinite-deck draw probabilities
+     A..9 each = 1/13, 10-value (10,J,Q,K) = 4/13
+   - Split only once: if hasSplit checked, recommend no split.
+   - Cannot hit split aces: if isSplitAces checked, recommend Stand only.
+   - Double on any first 2 cards; can double after split (DAS): allowed when isFirstTwo checked.
+   - Dealer stands on soft 17: recommendations use S17 multi-deck basic strategy.
+   - Insurance allowed only when dealer shows Ace: we show it only then; recommendation = "Never" (basic strategy).
+   ========================================================= */
+
+const RANK_PROBS = {
+  'A': 1/13,
+  '2': 1/13, '3': 1/13, '4': 1/13, '5': 1/13, '6': 1/13, '7': 1/13, '8': 1/13, '9': 1/13,
+  '10': 4/13 // includes 10,J,Q,K
+};
+
+function normRank(s){
+  const c = s.trim().toUpperCase();
+  if(!c) return null;
+  if(c === 'A') return 'A';
+  if(['J','Q','K','T','10'].includes(c)) return '10';
+  const n = parseInt(c,10);
+  if(!isNaN(n) && n>=2 && n<=9) return String(n);
+  return null;
+}
+
+function parseHand(text){
+  const parts = (text || '').split(',').map(x => x.trim()).filter(Boolean);
+  const ranks = [];
+  for(const p of parts){
+    const r = normRank(p);
+    if(r) ranks.push(r);
+  }
+  return ranks;
+}
+
+function handTotals(ranks){
+  // returns all possible totals (aces as 1 or 11)
+  let totals = [0];
+  for(const r of ranks){
+    const next = [];
+    for(const t of totals){
+      if(r === 'A'){
+        next.push(t+11);
+        next.push(t+1);
+      } else {
+        next.push(t+parseInt(r,10));
       }
-      bustProb = (bustProb * 100).toFixed(2);
-      blackjackProb = (blackjackProb * 100).toFixed(2);
-      const resultDiv = document.getElementById('result');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML = `<h3>Odds</h3>
-        <p>Chance of busting if you hit: <strong>${bustProb}%</strong></p>
-        <p>Chance of drawing to exactly 21: <strong>${blackjackProb}%</strong></p>`;
-      updateStats();
     }
-    function recordResult(result) {
-      const data = JSON.parse(localStorage.getItem('bjStats') || '{}');
-      if (result === 'win') data.wins = (data.wins || 0) + 1;
-      if (result === 'loss') data.losses = (data.losses || 0) + 1;
-      localStorage.setItem('bjStats', JSON.stringify(data));
-      updateStats();
-      alert('Result recorded!');
+    totals = next;
+  }
+  totals = [...new Set(totals)].sort((a,b)=>a-b);
+  return totals;
+}
+
+function bestTotal(totals){
+  // best <=21 else min
+  const under = totals.filter(x => x<=21);
+  if(under.length) return Math.max(...under);
+  return Math.min(...totals);
+}
+
+function isSoft(ranks){
+  // soft if any ace counted as 11 without busting
+  const totals = handTotals(ranks);
+  const under = totals.filter(t=>t<=21);
+  if(!under.length) return false;
+  // if any under total differs by 10 from another under total, ace flexibility exists
+  return under.some(t => under.includes(t-10));
+}
+
+function isBlackjack(ranks){
+  if(ranks.length !== 2) return false;
+  const sorted = [...ranks].sort().join(',');
+  return sorted === '10,A' || sorted === 'A,10';
+}
+
+function isPair(ranks){
+  return ranks.length === 2 && ranks[0] === ranks[1];
+}
+
+function bustOddsIfHit(ranks){
+  const totals = handTotals(ranks);
+  let bustP = 0;
+  let make21P = 0; // probability to reach exactly 21 (not necessarily "natural")
+  for(const [rank,p] of Object.entries(RANK_PROBS)){
+    // compute if ANY possible total after draw is <=21; if all >21 => bust
+    const newTotals = handTotals([...ranks, rank]);
+    const under = newTotals.some(t=>t<=21);
+    const hit21 = newTotals.some(t=>t===21);
+    if(!under) bustP += p;
+    if(hit21) make21P += p;
+  }
+  return { bustP, make21P };
+}
+
+function insuranceRecommendation(dealerUpRank){
+  if(dealerUpRank !== 'A') return { allowed:false, rec:'Not available', note:'Insurance only offered when dealer shows an Ace.' };
+  return { allowed:true, rec:'Do NOT take insurance', note:'Insurance is negative EV long-term (basic strategy says never).'};
+}
+
+/* =========================================================
+   BASIC STRATEGY (Multi-deck, S17, DAS)
+   Returns one of: HIT, STAND, DOUBLE, SPLIT, INSURANCE (optional)
+   Enforces: split once, no hit split aces
+   ========================================================= */
+function recommendAction(playerRanks, dealerUpRank, opts){
+  const { isFirstTwo, hasSplit, isSplitAces } = opts;
+
+  if(isSplitAces){
+    return { action:'STAND', reason:'Rule: you cannot hit split aces. Lock it in and move on.' };
+  }
+
+  // If blackjack (natural), no action needed
+  if(isBlackjack(playerRanks)){
+    // Note: if dealer has blackjack too -> push; otherwise you win. But dealer hole is unknown here.
+    return { action:'STAND', reason:'Natural blackjack. No action needed (dealer check will decide win/push).'};
+  }
+
+  // Pair logic (only if first 2 cards)
+  if(isFirstTwo && isPair(playerRanks) && !hasSplit){
+    const r = playerRanks[0];
+    // Pair tables (common multi-deck S17 DAS)
+    if(r === 'A') return { action:'SPLIT', reason:'Always split aces.' };
+    if(r === '10') return { action:'STAND', reason:'Never split tens.' };
+    if(r === '9'){
+      if(['2','3','4','5','6','8','9'].includes(dealerUpRank)) return { action:'SPLIT', reason:'Split 9s vs 2-6, 8-9.' };
+      return { action:'STAND', reason:'Stand with 18 vs 7,10,A.' };
     }
-    function updateStats() {
-      const statsEl = document.getElementById('stats');
-      const data = JSON.parse(localStorage.getItem('bjStats') || '{}');
-      const wins = data.wins || 0;
-      const losses = data.losses || 0;
-      const total = wins + losses;
-      if (total === 0) {
-        statsEl.style.display = 'block';
-        statsEl.innerHTML = '<h3>Your Statistics</h3><p>No games recorded yet.</p>';
-        return;
+    if(r === '8') return { action:'SPLIT', reason:'Always split 8s.' };
+    if(r === '7'){
+      if(['2','3','4','5','6','7'].includes(dealerUpRank)) return { action:'SPLIT', reason:'Split 7s vs 2-7.' };
+      return { action:'HIT', reason:'Don’t split 7s vs 8-A; hit.' };
+    }
+    if(r === '6'){
+      if(['2','3','4','5','6'].includes(dealerUpRank)) return { action:'SPLIT', reason:'Split 6s vs 2-6.' };
+      return { action:'HIT', reason:'Hit 12 vs 7-A.' };
+    }
+    if(r === '5'){
+      // treat as hard 10
+      if(['2','3','4','5','6','7','8','9'].includes(dealerUpRank) && isFirstTwo) return { action:'DOUBLE', reason:'Play 5,5 as 10: double vs 2-9.' };
+      return { action:'HIT', reason:'Hit 10 vs 10/A.' };
+    }
+    if(r === '4'){
+      if(['5','6'].includes(dealerUpRank)) return { action:'SPLIT', reason:'Split 4s vs 5-6 (DAS helps).' };
+      return { action:'HIT', reason:'Otherwise hit.' };
+    }
+    if(r === '3' || r === '2'){
+      if(['2','3','4','5','6','7'].includes(dealerUpRank)) return { action:'SPLIT', reason:'Split 2s/3s vs 2-7.' };
+      return { action:'HIT', reason:'Otherwise hit.' };
+    }
+  }
+
+  // Soft totals
+  const soft = isSoft(playerRanks);
+  const totals = handTotals(playerRanks);
+  const total = bestTotal(totals);
+
+  if(soft){
+    // map soft totals A,2.. etc. total in [13..20] typically
+    if(total <= 17){
+      // A2/A3 (13/14): double vs 5-6 else hit
+      // A4/A5 (15/16): double vs 4-6 else hit
+      // A6 (17): double vs 3-6 else hit
+      if(total === 13 || total === 14){
+        if(isFirstTwo && ['5','6'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Soft 13/14: double vs 5-6.' };
+        return { action:'HIT', reason:'Soft 13/14: hit.' };
       }
-      const winRate = ((wins / total) * 100).toFixed(2);
-      statsEl.style.display = 'block';
-      statsEl.innerHTML = `<h3>Your Statistics</h3>
-        <p>Wins: <strong>${wins}</strong> &nbsp;&nbsp; Losses: <strong>${losses}</strong></p>
-        <p>Your success rate: <strong>${winRate}%</strong></p>`;
+      if(total === 15 || total === 16){
+        if(isFirstTwo && ['4','5','6'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Soft 15/16: double vs 4-6.' };
+        return { action:'HIT', reason:'Soft 15/16: hit.' };
+      }
+      if(total === 17){
+        if(isFirstTwo && ['3','4','5','6'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Soft 17: double vs 3-6.' };
+        return { action:'HIT', reason:'Soft 17: hit.' };
+      }
     }
-    document.addEventListener('DOMContentLoaded', updateStats);
-  </script>
+    if(total === 18){
+      if(isFirstTwo && ['3','4','5','6'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Soft 18: double vs 3-6.' };
+      if(['2','7','8'].includes(dealerUpRank)) return { action:'STAND', reason:'Soft 18: stand vs 2,7,8.' };
+      return { action:'HIT', reason:'Soft 18: hit vs 9,10,A.' };
+    }
+    if(total >= 19){
+      return { action:'STAND', reason:'Soft 19+ is strong; stand.' };
+    }
+  }
+
+  // Hard totals
+  if(total <= 8) return { action:'HIT', reason:'Hard 8 or less: always hit.' };
+
+  if(total === 9){
+    if(isFirstTwo && ['3','4','5','6'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Hard 9: double vs 3-6.' };
+    return { action:'HIT', reason:'Hard 9: hit otherwise.' };
+  }
+  if(total === 10){
+    if(isFirstTwo && ['2','3','4','5','6','7','8','9'].includes(dealerUpRank)) return { action:'DOUBLE', reason:'Hard 10: double vs 2-9.' };
+    return { action:'HIT', reason:'Hard 10: hit vs 10/A.' };
+  }
+  if(total === 11){
+    // multi-deck: double vs 2-10; vs A usually hit (some tables say double vs A if allowed; we stay conservative)
+    if(isFirstTwo && dealerUpRank !== 'A') return { action:'DOUBLE', reason:'Hard 11: double vs 2-10.' };
+    return { action:'HIT', reason:'Hard 11 vs Ace: hit.' };
+  }
+  if(total === 12){
+    if(['4','5','6'].includes(dealerUpRank)) return { action:'STAND', reason:'Hard 12: stand vs 4-6.' };
+    return { action:'HIT', reason:'Hard 12: hit vs 2-3,7-A.' };
+  }
+  if(total >= 13 && total <= 16){
+    if(['2','3','4','5','6'].includes(dealerUpRank)) return { action:'STAND', reason:`Hard ${total}: stand vs 2-6.` };
+    return { action:'HIT', reason:`Hard ${total}: hit vs 7-A.` };
+  }
+  // 17+
+  return { action:'STAND', reason:'Hard 17+ : stand.' };
+}
+
+/* =========================================================
+   MEMORY / STATS
+   We store calculations and outcomes in localStorage:
+   bjCaseLog: [{ts, player, dealerUp, bustP, make21P, recAction, outcome:null|win|loss|push}]
+   ========================================================= */
+function loadLog(){
+  return JSON.parse(localStorage.getItem('bjCaseLog') || '[]');
+}
+function saveLog(log){
+  localStorage.setItem('bjCaseLog', JSON.stringify(log));
+}
+function clearSession(){
+  localStorage.removeItem('bjCaseLog');
+  renderStats();
+  renderHud();
+  const r = document.getElementById('result');
+  r.style.display='none';
+  r.innerHTML='';
+  alert('Session memory cleared.');
+}
+
+function bucket(pct){
+  if(pct < 20) return 'Low risk (<20%)';
+  if(pct < 40) return 'Medium risk (20-40%)';
+  if(pct < 60) return 'High risk (40-60%)';
+  return 'Very high risk (60%+)';
+}
+
+function renderHud(){
+  const log = loadLog();
+  const hud = document.getElementById('sessionHud');
+  hud.innerHTML = '';
+  const last = [...log].reverse().find(x=>x);
+  if(!last) return;
+
+  const chips = [];
+  chips.push(`<div class="chip"><b>Last rec:</b> <span class="mono">${last.recAction}</span></div>`);
+  chips.push(`<div class="chip"><b>Bust:</b> <span class="mono">${(last.bustP*100).toFixed(2)}%</span></div>`);
+  chips.push(`<div class="chip"><b>Make 21:</b> <span class="mono">${(last.make21P*100).toFixed(2)}%</span></div>`);
+  chips.push(`<div class="chip"><b>Status:</b> <span class="mono">${last.outcome ? last.outcome : 'awaiting result'}</span></div>`);
+  hud.innerHTML = chips.join('');
+}
+
+function renderStats(){
+  const stats = document.getElementById('stats');
+  const log = loadLog();
+  if(!log.length){
+    stats.innerHTML = `<div class="mono">No cases yet. Run a calculation and record outcomes to build your notebook.</div>`;
+    return;
+  }
+
+  const finished = log.filter(x=>x.outcome);
+  const wins = finished.filter(x=>x.outcome==='win').length;
+  const losses = finished.filter(x=>x.outcome==='loss').length;
+  const pushes = finished.filter(x=>x.outcome==='push').length;
+  const total = finished.length;
+
+  const winRate = total ? (wins/total*100) : 0;
+
+  // By recommendation success
+  const byRec = {};
+  for(const c of finished){
+    byRec[c.recAction] ??= {w:0,l:0,p:0,t:0};
+    byRec[c.recAction].t++;
+    if(c.outcome==='win') byRec[c.recAction].w++;
+    if(c.outcome==='loss') byRec[c.recAction].l++;
+    if(c.outcome==='push') byRec[c.recAction].p++;
+  }
+
+  // By bust-risk bucket
+  const byBucket = {};
+  for(const c of finished){
+    const b = bucket(c.bustP*100);
+    byBucket[b] ??= {w:0,l:0,p:0,t:0};
+    byBucket[b].t++;
+    if(c.outcome==='win') byBucket[b].w++;
+    if(c.outcome==='loss') byBucket[b].l++;
+    if(c.outcome==='push') byBucket[b].p++;
+  }
+
+  let recLines = '';
+  const recKeys = Object.keys(byRec);
+  if(recKeys.length){
+    recLines += '<div class="divider"></div><div class="mono"><b>Success by recommendation</b></div>';
+    for(const k of recKeys){
+      const r = byRec[k];
+      const wr = r.t ? (r.w/r.t*100).toFixed(1) : '0.0';
+      recLines += `<div class="mono" style="margin-top:6px;">${k}: ${r.w}W / ${r.l}L / ${r.p}P  — win% ${wr}</div>`;
+    }
+  }
+
+  let bucketLines = '';
+  const bKeys = Object.keys(byBucket);
+  if(bKeys.length){
+    bucketLines += '<div class="divider"></div><div class="mono"><b>Success by bust-risk bucket</b></div>';
+    for(const k of bKeys){
+      const r = byBucket[k];
+      const wr = r.t ? (r.w/r.t*100).toFixed(1) : '0.0';
+      bucketLines += `<div class="mono" style="margin-top:6px;">${k}: ${r.w}W / ${r.l}L / ${r.p}P  — win% ${wr}</div>`;
+    }
+  }
+
+  stats.innerHTML = `
+    <div class="kpi">
+      <div class="box">
+        <div class="t">Recorded hands</div>
+        <div class="v">${total}</div>
+      </div>
+      <div class="box">
+        <div class="t">Win rate</div>
+        <div class="v">${winRate.toFixed(1)}%</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <span class="tag good">Wins ${wins}</span>
+      <span class="tag bad" style="margin-left:8px;">Losses ${losses}</span>
+      <span class="tag neutral" style="margin-left:8px;">Push ${pushes}</span>
+    </div>
+    ${recLines}
+    ${bucketLines}
+  `;
+}
+
+function recordOutcome(outcome){
+  const log = loadLog();
+  // attach to most recent calculation that has no outcome
+  for(let i=log.length-1;i>=0;i--){
+    if(!log[i].outcome){
+      log[i].outcome = outcome;
+      saveLog(log);
+      renderStats();
+      renderHud();
+      alert('Outcome saved to most recent calculation.');
+      return;
+    }
+  }
+  alert('No pending calculation found. Run a calculation first, then record the result.');
+}
+
+/* =========================================================
+   MAIN ANALYZE
+   ========================================================= */
+function analyze(){
+  const playerRanks = parseHand(document.getElementById('playerHand').value);
+  const dealerRanks = parseHand(document.getElementById('dealerHand').value);
+
+  if(!playerRanks.length){
+    alert('Enter your hand (ex: A, 7).');
+    return;
+  }
+  if(!dealerRanks.length){
+    alert('Enter dealer up card (ex: 9 or A).');
+    return;
+  }
+
+  const dealerUp = dealerRanks[0]; // use first as up-card
+
+  const isFirstTwo = document.getElementById('isFirstTwo').checked;
+  const hasSplit = document.getElementById('hasSplit').checked;
+  const isSplitAces = document.getElementById('isSplitAces').checked;
+  const wantInsurance = document.getElementById('wantInsurance').checked;
+
+  // totals
+  const totals = handTotals(playerRanks);
+  const total = bestTotal(totals);
+  const soft = isSoft(playerRanks);
+  const bj = isBlackjack(playerRanks);
+  const pair = isPair(playerRanks);
+
+  // odds for HIT
+  const { bustP, make21P } = bustOddsIfHit(playerRanks);
+
+  // recommendations
+  const rec = recommendAction(playerRanks, dealerUp, {isFirstTwo, hasSplit, isSplitAces});
+  const ins = insuranceRecommendation(dealerUp);
+
+  // enforce rule: split only once
+  let legalNote = [];
+  if(rec.action === 'SPLIT' && hasSplit){
+    legalNote.push('Split is recommended by strategy, but you marked “Already split”, so it’s not legal (split once rule).');
+  }
+  if(isSplitAces){
+    legalNote.push('No hitting split aces is enforced.');
+  }
+
+  // Insurance display logic
+  let insuranceBlock = '';
+  if(wantInsurance){
+    if(ins.allowed){
+      insuranceBlock = `<div class="divider"></div>
+        <div><span class="tag neutral">Insurance</span></div>
+        <div class="mono" style="margin-top:6px;"><b>Recommendation:</b> ${ins.rec}</div>
+        <div class="mono" style="margin-top:4px; opacity:.9;">${ins.note}</div>`;
+    } else {
+      insuranceBlock = `<div class="divider"></div>
+        <div><span class="tag neutral">Insurance</span></div>
+        <div class="mono" style="margin-top:6px;">${ins.note}</div>`;
+    }
+  }
+
+  // Outcome rules note about natural blackjack
+  let naturalsNote = '';
+  if(bj){
+    naturalsNote = `<div class="divider"></div>
+      <div class="mono">
+        <b>Natural blackjack rules:</b><br/>
+        If dealer also has natural blackjack → <b>Push</b>.<br/>
+        If dealer has natural blackjack and you don’t → game ends (insurance pays if taken).
+      </div>`;
+  }
+
+  const result = document.getElementById('result');
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="kpi">
+      <div class="box">
+        <div class="t">Your total</div>
+        <div class="v">${total}${soft ? ' (soft)' : ''}</div>
+      </div>
+      <div class="box">
+        <div class="t">Dealer up card</div>
+        <div class="v">${dealerUp}</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="kpi">
+      <div class="box">
+        <div class="t">Bust chance if HIT</div>
+        <div class="v">${(bustP*100).toFixed(2)}%</div>
+      </div>
+      <div class="box">
+        <div class="t">Chance to reach 21 on HIT</div>
+        <div class="v">${(make21P*100).toFixed(2)}%</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div><span class="tag good">Recommended action</span></div>
+    <div class="act" style="margin-top:10px;">
+      <div>
+        ${rec.action}
+        <small>${rec.reason}</small>
+      </div>
+      <div class="mono">${bucket(bustP*100)}</div>
+    </div>
+
+    <div class="actions">
+      <div class="act"><div>Hit <small>Odds shown above</small></div><div>👉</div></div>
+      <div class="act"><div>Stand <small>Lock current total</small></div><div>✋</div></div>
+      <div class="act"><div>Split <small>Only if pair + not split yet</small></div><div>🂡🂡</div></div>
+      <div class="act"><div>Double <small>Allowed on first 2 (and after split)</small></div><div>×2</div></div>
+    </div>
+
+    ${legalNote.length ? `<div class="divider"></div><div class="mono"><b>Legality notes:</b><br/>${legalNote.map(x=>`• ${x}`).join('<br/>')}</div>` : ''}
+
+    ${insuranceBlock}
+    ${naturalsNote}
+
+    <div class="divider"></div>
+    <div class="mono" style="opacity:.9;">
+      <b>Deck model:</b> Unlimited decks (infinite shoe). Draw probs: A..9 = 1/13 each, 10-value = 4/13.
+    </div>
+  `;
+
+  // Log this calculation (for memory + success tracking)
+  const log = loadLog();
+  log.push({
+    ts: Date.now(),
+    player: playerRanks,
+    dealerUp,
+    bustP,
+    make21P,
+    recAction: rec.action,
+    outcome: null
+  });
+  saveLog(log);
+
+  renderStats();
+  renderHud();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderStats();
+  renderHud();
+});
+</script>
 </body>
 </html>
