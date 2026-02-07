@@ -1,1 +1,226 @@
-Add Blackjack Detective game
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blackjack Detective</title>
+  <style>
+    body {
+      background: #222;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      background: #111;
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      border-bottom: 3px solid #8a2be2;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: #8a2be2;
+    }
+    .container {
+      margin-top: 30px;
+      width: 90%;
+      max-width: 800px;
+      background: #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      padding: 20px;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #8a2be2;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #a55ced;
+    }
+    .result {
+      margin-top: 15px;
+      background: #444;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .stats {
+      margin-top: 15px;
+      background: #444;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔍 Blackjack Detective</h1>
+    <p>Investigate your odds like a pro card shark</p>
+  </header>
+  <div class="container">
+    <div class="section">
+      <h2>Input Hands</h2>
+      <label for="player-hand">Your Hand (comma-separated e.g. "A, K" or "10, 7, 4")</label>
+      <input id="player-hand" type="text" placeholder="Enter your cards" />
+      <label for="dealer-hand">Dealer's Visible Hand (comma-separated e.g. "9" or "A")</label>
+      <input id="dealer-hand" type="text" placeholder="Enter dealer's cards" />
+      <button onclick="calculateOdds()">Calculate Odds</button>
+    </div>
+    <div id="result" class="result" style="display: none;"></div>
+    <div class="section">
+      <h2>Record Outcome</h2>
+      <button onclick="recordResult('win')">I Won</button>
+      <button onclick="recordResult('loss')">I Lost</button>
+    </div>
+    <div id="stats" class="stats" style="display: none;"></div>
+  </div>
+  <script>
+    function parseCard(card) {
+      card = card.trim().toUpperCase();
+      if (card === 'A') return { value: 11, alt: 1, isAce: true };
+      if (['J','Q','K'].includes(card)) return { value: 10, alt: 10 };
+      const num = parseInt(card);
+      if (!isNaN(num) && num >= 2 && num <= 10) return { value: num, alt: num };
+      return null;
+    }
+    function handValue(cards) {
+      let totals = [0];
+      cards.forEach(card => {
+        const newTotals = [];
+        totals.forEach(tot => {
+          newTotals.push(tot + (card.isAce ? 11 : card.value));
+          if (card.isAce) newTotals.push(tot + 1);
+        });
+        totals = newTotals;
+      });
+      return [...new Set(totals)];
+    }
+    function countRemaining(cardsInPlay) {
+      const counts = {
+        '2': 4, '3': 4, '4': 4, '5': 4, '6': 4, '7': 4, '8': 4, '9': 4,
+        '10': 4, 'J': 4, 'Q': 4, 'K': 4, 'A': 4
+      };
+      cardsInPlay.forEach(card => {
+        const name = card.original.toUpperCase();
+        if (counts[name] > 0) counts[name]--;
+      });
+      return counts;
+    }
+    function totalCards(counts) {
+      return Object.values(counts).reduce((a, b) => a + b, 0);
+    }
+    function calculateOdds() {
+      const playerInput = document.getElementById('player-hand').value;
+      const dealerInput = document.getElementById('dealer-hand').value;
+      if (!playerInput) { alert('Please enter your cards.'); return; }
+      const playerCards = [];
+      const allCards = [];
+      playerInput.split(',').forEach(str => {
+        const card = parseCard(str);
+        if (card) {
+          playerCards.push(card);
+          allCards.push({ ...card, original: str.trim() });
+        }
+      });
+      dealerInput.split(',').forEach(str => {
+        if (!str.trim()) return;
+        const card = parseCard(str);
+        if (card) {
+          allCards.push({ ...card, original: str.trim() });
+        }
+      });
+      if (!playerCards.length) { alert('No valid player cards found.'); return; }
+      const playerTotals = handValue(playerCards);
+      const counts = countRemaining(allCards);
+      const totalRemainingCards = totalCards(counts);
+      let bustProb = 0;
+      let blackjackProb = 0;
+      for (const cardName in counts) {
+        const count = counts[cardName];
+        if (count <= 0) continue;
+        const cardObj = parseCard(cardName);
+        let bustCases = 0;
+        let bjCases = 0;
+        playerTotals.forEach(pt => {
+          if (cardObj.isAce) {
+            const t1 = pt + 11;
+            const t2 = pt + 1;
+            [t1, t2].forEach(tv => {
+              if (tv > 21) bustCases++;
+              if (tv === 21) bjCases++;
+            });
+          } else {
+            const t = pt + cardObj.value;
+            if (t > 21) bustCases++;
+            if (t === 21) bjCases++;
+          }
+        });
+        const p = count / totalRemainingCards;
+        if (bustCases > 0) bustProb += p;
+        if (bjCases > 0) blackjackProb += p;
+      }
+      bustProb = (bustProb * 100).toFixed(2);
+      blackjackProb = (blackjackProb * 100).toFixed(2);
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `<h3>Odds</h3>
+        <p>Chance of busting if you hit: <strong>${bustProb}%</strong></p>
+        <p>Chance of drawing to exactly 21: <strong>${blackjackProb}%</strong></p>`;
+      updateStats();
+    }
+    function recordResult(result) {
+      const data = JSON.parse(localStorage.getItem('bjStats') || '{}');
+      if (result === 'win') data.wins = (data.wins || 0) + 1;
+      if (result === 'loss') data.losses = (data.losses || 0) + 1;
+      localStorage.setItem('bjStats', JSON.stringify(data));
+      updateStats();
+      alert('Result recorded!');
+    }
+    function updateStats() {
+      const statsEl = document.getElementById('stats');
+      const data = JSON.parse(localStorage.getItem('bjStats') || '{}');
+      const wins = data.wins || 0;
+      const losses = data.losses || 0;
+      const total = wins + losses;
+      if (total === 0) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = '<h3>Your Statistics</h3><p>No games recorded yet.</p>';
+        return;
+      }
+      const winRate = ((wins / total) * 100).toFixed(2);
+      statsEl.style.display = 'block';
+      statsEl.innerHTML = `<h3>Your Statistics</h3>
+        <p>Wins: <strong>${wins}</strong> &nbsp;&nbsp; Losses: <strong>${losses}</strong></p>
+        <p>Your success rate: <strong>${winRate}%</strong></p>`;
+    }
+    document.addEventListener('DOMContentLoaded', updateStats);
+  </script>
+</body>
+</html>
