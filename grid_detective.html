@@ -1,516 +1,411 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Grid Detective 🕵️‍♂️💣 (Smarter NPC)</title>
-<style>
-  body { background:#0b1420; color:#e7eef8; font-family: system-ui, -apple-system, Segoe UI; margin:20px; }
-  h1 { margin:0 0 8px; }
-  .muted { opacity:.8; font-size:13px; line-height:1.35; margin-bottom:14px; }
-  .card { background:#121f2f; border:1px solid #1f3550; border-radius:14px; padding:14px; margin-bottom:14px; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  select, button, input {
-    padding:10px; border-radius:10px; background:#0f1b2a; color:#e7eef8; border:1px solid #284869; font-size:14px;
-  }
-  button { cursor:pointer; }
-  button:hover { background:#132337; }
-  .grid { display:grid; grid-template-columns: repeat(5, 64px); gap:10px; justify-content:center; }
-  .tile {
-    width:64px; height:64px; border-radius:14px; background:#22384f;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-    transition: .15s; font-weight:700; user-select:none; position:relative;
-  }
-  .tile:hover { transform:scale(1.05); }
-  .revealed-safe { background:#2ecc71; color:#0b1420; }
-  .revealed-danger { background:#e74c3c; }
-  .hint-safe { outline:3px solid #59f7b0; box-shadow:0 0 0 2px rgba(89,247,176,.15); }
-  .hint-warn { outline:3px solid #ff6b6b; box-shadow:0 0 0 2px rgba(255,107,107,.12); }
-  .heat { position:absolute; inset:0; border-radius:14px; opacity:.25; pointer-events:none; }
-  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
-  th, td { border-bottom:1px solid #20364f; padding:8px; text-align:left; vertical-align:top; }
-  .pill { padding:8px 10px; border-radius:999px; border:1px solid #2a567e; background:#0f1b2a; font-size:13px; }
-  .good { color:#59f7b0; font-weight:700; }
-  .bad { color:#ff6b6b; font-weight:700; }
-  .warn { color:#ffd166; font-weight:700; }
-  .tiny { font-size:12px; opacity:.8; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Grid Detective 🕵️‍♂️ (User-Revealed Danger)</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 18px; background: #0b1420; color: #e7eef8; }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    .muted { opacity:.8; font-size: 13px; line-height: 1.35; margin-bottom: 12px; }
+    .card { background: #121f2f; border: 1px solid #1f3550; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    label { font-size: 13px; opacity:.9; }
+    input[type="range"] { width: 220px; }
+    button, select {
+      padding: 10px; border-radius: 10px; border: 1px solid #284869;
+      background: #0f1b2a; color: #e7eef8; cursor:pointer; font-size:14px;
+    }
+    button:hover { background:#132337; }
+    .gridWrap { display:flex; justify-content:center; }
+    .grid { display:grid; grid-template-columns: repeat(5, 68px); gap:10px; }
+    .tile {
+      width:68px; height:68px; border-radius: 16px; background:#22384f;
+      display:flex; align-items:center; justify-content:center; user-select:none;
+      cursor:pointer; position:relative; transition:.15s;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+      font-weight: 700;
+    }
+    .tile:hover { transform: scale(1.04); }
+    .state-unknown { background:#22384f; }
+    .state-danger { background:#e74c3c; }
+    .state-safe { background:#2ecc71; color:#062012; }
+    .hint { outline: 3px solid #59f7b0; box-shadow: 0 0 0 2px rgba(89,247,176,.12); }
+    .avoid { outline: 3px solid #ff6b6b; box-shadow: 0 0 0 2px rgba(255,107,107,.10); }
+    .heat {
+      position:absolute; inset:0; border-radius:16px; opacity:.23; pointer-events:none;
+      mix-blend-mode: screen;
+    }
+    .pill { padding: 8px 10px; border-radius: 999px; border: 1px solid #2a567e; background:#0f1b2a; font-size: 13px; }
+    .good { color:#59f7b0; font-weight:700; }
+    .bad { color:#ff6b6b; font-weight:700; }
+    .warn { color:#ffd166; font-weight:700; }
+    table { width:100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #20364f; padding: 8px; text-align:left; vertical-align: top; }
+    .tiny { font-size:12px; opacity:.8; line-height:1.3; }
+  </style>
 </head>
 <body>
-
-<h1>Grid Detective 🕵️‍♂️💣</h1>
-<div class="muted">
-  Smarter NPC: learns per difficulty, uses spatial “crime scene” features, balances exploration vs exploitation, and simulates safe paths.
-</div>
-
-<div class="card">
-  <div class="row">
-    <label>Difficulty (danger squares)</label>
-    <select id="difficulty">
-      <option value="1">1 danger</option>
-      <option value="3">3 danger</option>
-      <option value="8" selected>8 danger</option>
-      <option value="15">15 danger</option>
-      <option value="24">24 danger</option>
-    </select>
-
-    <label>Simulations</label>
-    <select id="sims">
-      <option value="2000">2,000</option>
-      <option value="5000" selected>5,000</option>
-      <option value="12000">12,000</option>
-    </select>
-
-    <button id="newRoundBtn">New Round</button>
-    <button id="resetBtn">Reset Learning</button>
+  <h1>Grid Detective 🕵️‍♂️</h1>
+  <div class="muted">
+    Click tiles to mark what you KNOW. The NPC uses your confirmed danger tiles + learned patterns from past cases to recommend the next move and simulate safe paths.
+    <br/>Tile cycle: Unknown → Danger → Safe → Unknown
   </div>
 
-  <div class="row" style="margin-top:10px;">
-    <div class="pill">Round clicks: <b id="clicks">0</b></div>
-    <div class="pill">Round status: <b id="status">Active</b></div>
-    <div class="pill">NPC mood: <b id="mood">Analyzing…</b></div>
+  <div class="card">
+    <div class="row">
+      <label>Difficulty (expected danger tiles): <span id="diffVal" class="warn">8</span></label>
+      <input id="difficulty" type="range" min="1" max="24" value="8" />
+      <button id="newCase">New Case (clear board)</button>
+      <button id="learnCase">End Case + Learn</button>
+      <button id="resetAll">Reset Learning</button>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div class="pill">Confirmed danger: <b id="cntDanger">0</b></div>
+      <div class="pill">Confirmed safe: <b id="cntSafe">0</b></div>
+      <div class="pill">Unknown: <b id="cntUnknown">25</b></div>
+      <div class="pill">NPC best next: <span class="good" id="bestNext">—</span></div>
+      <div class="pill">Best 3-step path: <span class="good" id="bestPath">—</span></div>
+    </div>
+
+    <div class="tiny" style="margin-top:10px;">
+      Heat overlay = how often a tile was marked as danger in past cases. Green outline = best next move. Red outline = “avoid” tile (high learned risk).
+    </div>
   </div>
 
-  <div class="tiny" style="margin-top:10px;">
-    Tip: the green outline is the NPC’s best next move. The red outline is the “do NOT touch” vibe.
-  </div>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<div class="card" id="analytics">
-  <div class="row">
-    <div class="pill">Best next tile: <span class="good" id="bestTile">—</span></div>
-    <div class="pill">Worst tile: <span class="bad" id="worstTile">—</span></div>
-    <div class="pill">Survive 1 click: <span class="warn" id="surv1">—</span></div>
-    <div class="pill">Survive 3 clicks: <span class="warn" id="surv3">—</span></div>
-    <div class="pill">Best 3-step path: <span class="good" id="bestPath">—</span></div>
+  <div class="gridWrap">
+    <div class="grid" id="grid"></div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Tile</th>
-        <th>Risk</th>
-        <th>Why</th>
-      </tr>
-    </thead>
-    <tbody id="topTable"></tbody>
-  </table>
-</div>
+  <div class="card">
+    <div class="row">
+      <div class="pill">Cases learned: <b id="cases">0</b></div>
+      <div class="pill">Edge danger tendency: <b id="edgeBias">—</b></div>
+      <div class="pill">Corner danger tendency: <b id="cornerBias">—</b></div>
+      <div class="pill">Cluster score: <b id="clusterScore">—</b></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Top recommendations</th>
+          <th>Estimated risk</th>
+          <th>Reasoning (detective notes)</th>
+        </tr>
+      </thead>
+      <tbody id="recTable"></tbody>
+    </table>
+  </div>
 
 <script>
-/* ========= Game / Data ========= */
+/* =======================
+   Data + Storage
+======================= */
+const N = 25, W = 5;
+const KEY = "grid_detective_truth_v1";
 
-const N = 25;
-const W = 5;
+// tile states: 0 unknown, 1 danger, 2 safe
+let state = Array(N).fill(0);
 
-let bombs = [];
-let revealed = Array(N).fill(false);
-let roundOver = false;
-let clickCount = 0;
-
-// Separate stats per difficulty (dangerCount): keyed by "d1", "d3", ...
-// Each tile has Beta counts (a,b) for danger probability, plus context features.
-const STORAGE_KEY = "grid_detective_smart_v1";
-
-function defaultModel() {
-  // a,b are for "danger"; start with light prior a=1 b=3 (assume safer than not, but not too sure)
-  return Array.from({length:N}, ()=>({
-    a: 1, b: 3, // Beta prior for danger probability
-    picks: 0,
-    danger: 0,
-    safe: 0
-  }));
-}
-
-function loadAllModels() {
+function loadLearn() {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!raw) return {};
-    return raw;
-  } catch { return {}; }
+    return JSON.parse(localStorage.getItem(KEY)) ?? {
+      cases: 0,
+      dangerCounts: Array(N).fill(0), // how many cases each tile was marked danger
+      totalDangerMarks: 0,
+      layouts: [] // optional: store recent layouts for deeper analysis
+    };
+  } catch {
+    return { cases:0, dangerCounts:Array(N).fill(0), totalDangerMarks:0, layouts:[] };
+  }
 }
-function saveAllModels(models) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(models));
-}
+function saveLearn(L) { localStorage.setItem(KEY, JSON.stringify(L)); }
 
-let models = loadAllModels();
+let L = loadLearn();
 
-function modelKey(dangerCount) { return "d" + dangerCount; }
-function getModel(dangerCount) {
-  const k = modelKey(dangerCount);
-  if (!models[k]) models[k] = defaultModel();
-  return models[k];
-}
-
-/* ========= Helpers ========= */
-
+/* =======================
+   Helpers
+======================= */
 function idxToRC(i){ return {r: Math.floor(i/W), c: i%W}; }
 function rcToIdx(r,c){ return r*W+c; }
 
-function tileType(i){
-  const {r,c} = idxToRC(i);
-  const isCorner = (r===0||r===W-1) && (c===0||c===W-1);
-  const isEdge = (r===0||r===W-1||c===0||c===W-1) && !isCorner;
-  const isCenter = (r===2 && c===2);
-  return {isCorner, isEdge, isCenter};
-}
-
 function neighbors(i){
   const {r,c} = idxToRC(i);
-  const deltas = [
-    [-1,0],[1,0],[0,-1],[0,1],
-    [-1,-1],[-1,1],[1,-1],[1,1]
-  ];
+  const deltas = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
   const out = [];
   for (const [dr,dc] of deltas){
-    const nr = r+dr, nc = c+dc;
-    if (nr>=0 && nr<W && nc>=0 && nc<W) out.push(rcToIdx(nr,nc));
+    const nr=r+dr, nc=c+dc;
+    if(nr>=0&&nr<W&&nc>=0&&nc<W) out.push(rcToIdx(nr,nc));
   }
   return out;
 }
-
-// Normal approx: map risk [0,1] to a heat color (green->yellow->red) using HSL
+function tileGroup(i){
+  const {r,c}=idxToRC(i);
+  const corner = (r===0||r===4) && (c===0||c===4);
+  const edge = (r===0||r===4||c===0||c===4) && !corner;
+  const center = (r===2&&c===2);
+  return {corner, edge, center};
+}
 function heatColor(risk){
-  // hue 120 (green) down to 0 (red)
-  const hue = 120 * (1 - risk);
-  return `hsl(${hue} 90% 55%)`;
+  const hue = 120*(1-risk); // green->red
+  return `hsl(${hue} 95% 55%)`;
 }
 
-/* ========= RNG sampling (Beta via Gamma) ========= */
-
-function randn(){
-  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
-}
-function gammaSample(k, theta=1){
-  if (k < 1){
-    const u = Math.random();
-    return gammaSample(1+k, theta) * Math.pow(u, 1/k);
-  }
-  const d = k - 1/3;
-  const c = 1 / Math.sqrt(9*d);
-  while(true){
-    const x = randn();
-    let v = 1 + c*x;
-    if (v <= 0) continue;
-    v = v*v*v;
-    const u = Math.random();
-    if (u < 1 - 0.0331*(x*x)*(x*x)) return theta*d*v;
-    if (Math.log(u) < 0.5*x*x + d*(1 - v + Math.log(v))) return theta*d*v;
-  }
-}
-function betaSample(a,b){
-  const x = gammaSample(a,1), y = gammaSample(b,1);
-  return x/(x+y);
-}
-
-/* ========= Smarter Risk Model =========
-   We compute a "risk score" per tile that combines:
-   1) Learned danger probability from Beta posterior mean
-   2) Spatial priors (corner/edge/center) learned per difficulty
-   3) Neighbor propagation (if neighbors have high risk historically, this tile gets a bump)
-   4) Uncertainty / exploration (Thompson sampling draw)
-*/
-
-function computeRisk(dangerCount){
-  const M = getModel(dangerCount);
-
-  // Learn group priors (corner/edge/center/other) from model totals
-  const groups = {
-    corner: {a:1,b:3, n:0},
-    edge:   {a:1,b:3, n:0},
-    center: {a:1,b:3, n:0},
-    other:  {a:1,b:3, n:0},
-  };
-
-  for (let i=0;i<N;i++){
-    const t = tileType(i);
-    const g = t.isCenter ? "center" : t.isCorner ? "corner" : t.isEdge ? "edge" : "other";
-    groups[g].a += M[i].danger;
-    groups[g].b += M[i].safe;
-    groups[g].n += M[i].picks;
-  }
-
-  // Per-tile risk
-  const risk = Array(N).fill(0);
-  const riskTS = Array(N).fill(0); // Thompson sample variant for decision-making
-  const why = Array(N).fill("");
-
-  for (let i=0;i<N;i++){
-    const t = tileType(i);
-    const g = t.isCenter ? "center" : t.isCorner ? "corner" : t.isEdge ? "edge" : "other";
-
-    // Posterior mean danger prob
-    const meanTile = M[i].a / (M[i].a + M[i].b);
-
-    // Group prior mean
-    const meanGroup = groups[g].a / (groups[g].a + groups[g].b);
-
-    // Neighbor influence: average neighbor mean danger
-    const ns = neighbors(i);
-    const neigh = ns.reduce((acc,j)=> acc + (M[j].a/(M[j].a+M[j].b)), 0) / ns.length;
-
-    // Weighted blend
-    // Tile dominates if lots of picks; otherwise group/neigh matter more.
-    const wTile = Math.min(0.75, 0.20 + M[i].picks/40); // grows with experience
-    const wGroup = 0.18;
-    const wNeigh = 1 - wTile - wGroup;
-
-    const blended = wTile*meanTile + wGroup*meanGroup + wNeigh*neigh;
-
-    // Thompson Sampling draw (adds uncertainty awareness)
-    const tsDraw = betaSample(M[i].a, M[i].b);
-    const blendedTS = wTile*tsDraw + wGroup*meanGroup + wNeigh*neigh;
-
-    // If already revealed this round, force risk high to avoid recommending it again
-    const effective = revealed[i] ? 1.0 : blended;
-    const effectiveTS = revealed[i] ? 1.0 : blendedTS;
-
-    risk[i] = effective;
-    riskTS[i] = effectiveTS;
-
-    why[i] =
-      `tileMean ${(meanTile*100).toFixed(1)}% · group(${g}) ${(meanGroup*100).toFixed(1)}% · neigh ${(neigh*100).toFixed(1)}% · picks ${M[i].picks}`;
-  }
-
-  return {risk, riskTS, why};
-}
-
-/* ========= Monte Carlo Path Simulation =========
-   We simulate next clicks using risk scores as approximate danger probabilities.
-   (This is not perfect, but it gives a real “detective forecast” feeling.)
-*/
-
-function simulatePaths(dangerCount, sims){
-  const {risk, riskTS} = computeRisk(dangerCount);
-
-  // Choose candidates: lowest-risk unrevealed tiles
-  const candidates = [...Array(N).keys()]
-    .filter(i=>!revealed[i])
-    .sort((a,b)=>riskTS[a]-riskTS[b])
-    .slice(0, 10); // top 10 safest candidates
-
-  // Simulate survival for 1 and 3 clicks if we pick best action each step
-  let survive1=0, survive3=0;
-
-  // Best 3-step path search among candidate combos (limited for speed)
-  let bestPath = null;
-  let bestPathSurvival = -1;
-
-  function trialClick(tile, r){
-    // survive with probability (1 - risk[tile])
-    return Math.random() > r[tile];
-  }
-
-  for (let s=0; s<sims; s++){
-    // Greedy 1 click: pick lowest riskTS
-    const pick1 = candidates[0] ?? 0;
-    const ok1 = trialClick(pick1, risk);
-    if (ok1) survive1++;
-
-    // 3 click greedy: pick 3 lowest riskTS distinct tiles
-    const path3 = candidates.slice(0,3);
-    let ok3 = true;
-    for (const tile of path3){
-      if (!trialClick(tile, risk)){ ok3=false; break; }
-    }
-    if (ok3) survive3++;
-  }
-
-  // Evaluate best 3-step path by checking combinations (up to 10 choose 3 = 120)
-  const combos = [];
-  for (let i=0;i<candidates.length;i++){
-    for (let j=i+1;j<candidates.length;j++){
-      for (let k=j+1;k<candidates.length;k++){
-        combos.push([candidates[i], candidates[j], candidates[k]]);
-      }
-    }
-  }
-
-  for (const path of combos){
-    // approximate survival = Π (1 - risk[tile])
-    const surv = path.reduce((acc,tile)=> acc*(1-risk[tile]), 1);
-    if (surv > bestPathSurvival){
-      bestPathSurvival = surv;
-      bestPath = path;
-    }
-  }
-
-  return {
-    survive1: survive1/sims,
-    survive3: survive3/sims,
-    bestPath,
-    bestPathSurvival
-  };
-}
-
-/* ========= UI / Game Logic ========= */
-
+/* =======================
+   UI Build
+======================= */
 const gridEl = document.getElementById("grid");
-const difficultyEl = document.getElementById("difficulty");
-const simsEl = document.getElementById("sims");
+const diffEl = document.getElementById("difficulty");
+const diffVal = document.getElementById("diffVal");
 
-function setPill(id, val){ document.getElementById(id).textContent = val; }
-
-function moodLine(rBest){
-  if (roundOver) return "Case closed. 💀";
-  if (rBest < 0.10) return "Feeling lucky 😎";
-  if (rBest < 0.20) return "We’re good… mostly 🙂";
-  if (rBest < 0.35) return "I’m suspicious 👀";
-  return "This grid is cursed 😭";
-}
-
-function newRound(){
-  const dangerCount = Number(difficultyEl.value);
-  bombs = [];
-  revealed = Array(N).fill(false);
-  roundOver = false;
-  clickCount = 0;
-
-  // Generate bombs
-  while (bombs.length < dangerCount){
-    const r = Math.floor(Math.random()*N);
-    if (!bombs.includes(r)) bombs.push(r);
-  }
-
-  drawGrid();
-  updateNPC();
-  setPill("clicks", clickCount);
-  setPill("status", "Active");
-}
-
-function resetLearning(){
-  localStorage.removeItem(STORAGE_KEY);
-  models = {};
-  newRound();
-}
-
-function drawGrid(){
+function buildGrid(){
   gridEl.innerHTML = "";
-  for (let i=0;i<N;i++){
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.dataset.idx = i;
+  for(let i=0;i<N;i++){
+    const d = document.createElement("div");
+    d.className = "tile state-unknown";
+    d.dataset.idx = i;
 
     const heat = document.createElement("div");
     heat.className = "heat";
-    tile.appendChild(heat);
+    d.appendChild(heat);
 
-    tile.addEventListener("click", ()=> onPick(i, tile));
-    gridEl.appendChild(tile);
+    d.addEventListener("click", ()=>cycleTile(i));
+    gridEl.appendChild(d);
   }
 }
 
-function revealAllBombs(){
-  const tiles = document.querySelectorAll(".tile");
-  tiles.forEach((t)=>{
-    const i = Number(t.dataset.idx);
-    if (bombs.includes(i)){
-      t.textContent = "💣";
+function cycleTile(i){
+  state[i] = (state[i] + 1) % 3; // 0->1->2->0
+  render();
+}
+
+function setTileVisual(tile, i){
+  tile.classList.remove("state-unknown","state-danger","state-safe","hint","avoid");
+  if(state[i]===0){ tile.classList.add("state-unknown"); tile.textContent=""; }
+  if(state[i]===1){ tile.classList.add("state-danger"); tile.textContent="💣"; }
+  if(state[i]===2){ tile.classList.add("state-safe"); tile.textContent="✓"; }
+}
+
+function renderCounts(){
+  const cntDanger = state.filter(x=>x===1).length;
+  const cntSafe = state.filter(x=>x===2).length;
+  const cntUnknown = N - cntDanger - cntSafe;
+  document.getElementById("cntDanger").textContent = cntDanger;
+  document.getElementById("cntSafe").textContent = cntSafe;
+  document.getElementById("cntUnknown").textContent = cntUnknown;
+}
+
+/* =======================
+   Smarter NPC Logic
+   (User-revealed bombs + learned priors)
+======================= */
+
+/*
+We compute an "estimated danger risk" for every tile using:
+1) Hard constraints: confirmed danger = risk 1.0, confirmed safe = risk 0.0
+2) Learned prior: how often tile was marked danger in past cases
+3) Difficulty prior: expected danger density sets baseline risk
+4) Spatial inference: danger clusters -> neighbors get boosted
+5) Consistency correction: if player already marked many bombs this case, remaining tiles get lowered risk (because total bombs expected is limited)
+*/
+
+function computeRisk(){
+  const expectedDangers = Number(diffEl.value);
+  const density = expectedDangers / N; // baseline risk
+  const cases = Math.max(1, L.cases);
+
+  // Learned per-tile rate
+  const learned = L.dangerCounts.map(c => c / cases);
+
+  // Count current case marks
+  const curDanger = state.filter(x=>x===1).length;
+  const curSafe = state.filter(x=>x===2).length;
+  const curUnknownIdx = state.map((v,i)=>v===0?i:null).filter(v=>v!==null);
+
+  // Remaining bomb budget assumption (soft)
+  const remainingBudget = Math.max(0, expectedDangers - curDanger);
+  const remainingUnknown = Math.max(1, curUnknownIdx.length);
+  const budgetRate = remainingBudget / remainingUnknown;
+
+  const risk = Array(N).fill(0);
+
+  for(let i=0;i<N;i++){
+    if(state[i]===1){ risk[i]=1.0; continue; }
+    if(state[i]===2){ risk[i]=0.0; continue; }
+
+    // start from blend of baseline + learned
+    let r = 0.55*density + 0.45*learned[i];
+
+    // adjust using remaining budget (if you've already found many bombs, unknowns become safer)
+    r = 0.55*r + 0.45*budgetRate;
+
+    // spatial: if adjacent tiles are confirmed danger, increase risk slightly (cluster assumption)
+    const ns = neighbors(i);
+    const neighDanger = ns.filter(j=>state[j]===1).length;
+    if(neighDanger>0){
+      r += 0.06 * neighDanger; // bump per dangerous neighbor
     }
-  });
-}
 
-function onPick(i, tileEl){
-  if (roundOver) return;
-  if (revealed[i]) return;
+    // spatial: if adjacent tiles are confirmed safe, reduce risk slightly
+    const neighSafe = ns.filter(j=>state[j]===2).length;
+    if(neighSafe>0){
+      r -= 0.03 * neighSafe;
+    }
 
-  const dangerCount = Number(difficultyEl.value);
-  const M = getModel(dangerCount);
-
-  revealed[i] = true;
-  clickCount++;
-  setPill("clicks", clickCount);
-
-  M[i].picks++;
-
-  if (bombs.includes(i)){
-    // Danger
-    M[i].danger++;
-    M[i].a += 1; // update Beta counts for danger
-    tileEl.classList.add("revealed-danger");
-    tileEl.textContent = "💥";
-    roundOver = true;
-    setPill("status", "Lost");
-    revealAllBombs();
-  } else {
-    // Safe
-    M[i].safe++;
-    M[i].b += 1;
-    tileEl.classList.add("revealed-safe");
-    tileEl.textContent = "✓";
+    // clamp
+    r = Math.max(0.01, Math.min(0.99, r));
+    risk[i]=r;
   }
 
-  // Persist learning per difficulty
-  saveAllModels(models);
-
-  updateNPC();
+  return { risk, learned, density, budgetRate };
 }
 
-function updateNPC(){
-  const dangerCount = Number(difficultyEl.value);
-  const sims = Number(simsEl.value);
-
-  const {risk, riskTS, why} = computeRisk(dangerCount);
-
-  // Apply heatmap
+function recommend(){
   const tiles = document.querySelectorAll(".tile");
+  const { risk, learned, density, budgetRate } = computeRisk();
+
+  // Apply heat overlay from learned rates (not current risk) to show long-term patterns
+  const cases = Math.max(1, L.cases);
   tiles.forEach((t)=>{
     const i = Number(t.dataset.idx);
     const heat = t.querySelector(".heat");
-    const r = risk[i];
-    heat.style.background = heatColor(r);
-
-    t.classList.remove("hint-safe","hint-warn");
+    const lr = L.dangerCounts[i] / cases;
+    heat.style.background = heatColor(lr);
   });
 
-  // Find best/worst unrevealed
-  const candidates = [...Array(N).keys()].filter(i=>!revealed[i]);
-  const best = candidates.sort((a,b)=>riskTS[a]-riskTS[b])[0] ?? 0;
-  const worst = candidates.sort((a,b)=>riskTS[b]-riskTS[a])[0] ?? 0;
+  // Choose best next: lowest risk among unknown tiles
+  const unknown = state.map((v,i)=>v===0?i:null).filter(v=>v!==null);
+  let best = null, worst = null;
+  if(unknown.length){
+    best = unknown.reduce((a,b)=> risk[a] < risk[b] ? a : b);
+    worst = unknown.reduce((a,b)=> risk[a] > risk[b] ? a : b);
+  }
 
-  // Add hint outlines
-  if (tiles[best]) tiles[best].classList.add("hint-safe");
-  if (tiles[worst]) tiles[worst].classList.add("hint-warn");
+  // Clear hints
+  tiles.forEach(t=>t.classList.remove("hint","avoid"));
+  if(best!=null) tiles[best].classList.add("hint");
+  if(worst!=null) tiles[worst].classList.add("avoid");
 
-  setPill("bestTile", String(best));
-  setPill("worstTile", String(worst));
-  setPill("mood", moodLine(risk[best]));
+  document.getElementById("bestNext").textContent = best==null ? "—" : String(best);
 
-  // Simulate paths
-  const sim = simulatePaths(dangerCount, sims);
-  setPill("surv1", (sim.survive1*100).toFixed(1) + "%");
-  setPill("surv3", (sim.survive3*100).toFixed(1) + "%");
-  setPill("bestPath", sim.bestPath ? sim.bestPath.join(" → ") : "—");
+  // Best 3-step path:
+  // Pick 3 lowest-risk unknown tiles, but penalize adjacency to confirmed danger (path safety)
+  const scored = unknown.map(i=>{
+    const neighDanger = neighbors(i).filter(j=>state[j]===1).length;
+    const score = risk[i] + 0.04*neighDanger;
+    return {i, score, r:risk[i], neighDanger};
+  }).sort((a,b)=>a.score-b.score);
 
-  // Build top table: show 5 safest unrevealed tiles
-  const ranked = candidates
-    .map(i=>({i, r: risk[i], rTS: riskTS[i], why: why[i]}))
-    .sort((a,b)=>a.rTS-b.rTS)
-    .slice(0,5);
+  const path = scored.slice(0,3).map(x=>x.i);
+  document.getElementById("bestPath").textContent = path.length ? path.join(" → ") : "—";
 
-  const tbody = document.getElementById("topTable");
+  // Table: show top 5 recommendations with reasons
+  const tbody = document.getElementById("recTable");
   tbody.innerHTML = "";
-  ranked.forEach(x=>{
+
+  scored.slice(0,5).forEach((x,idx)=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><b>${x.i}</b></td>
+      <td><b>#${idx+1}</b> tile <b>${x.i}</b></td>
       <td>${(x.r*100).toFixed(1)}%</td>
-      <td class="tiny">${x.why}</td>
+      <td class="tiny">
+        Blend: baseline ${(density*100).toFixed(1)}% · learned ${(learned[x.i]*100).toFixed(1)}% · budget ${(budgetRate*100).toFixed(1)}% ·
+        + neighbor danger penalty (${x.neighDanger})
+      </td>
     `;
     tbody.appendChild(tr);
   });
+
+  // Pattern analytics (based on learned layouts)
+  document.getElementById("cases").textContent = L.cases;
+
+  // edge/corner bias from learned counts
+  const cases2 = Math.max(1, L.cases);
+  let edgeSum=0, edgeN=0, cornerSum=0, cornerN=0;
+  for(let i=0;i<N;i++){
+    const g = tileGroup(i);
+    if(g.edge){ edgeSum += L.dangerCounts[i]; edgeN++; }
+    if(g.corner){ cornerSum += L.dangerCounts[i]; cornerN++; }
+  }
+  const edgeRate = (edgeSum/(edgeN*cases2));
+  const cornerRate = (cornerSum/(cornerN*cases2));
+  document.getElementById("edgeBias").textContent = (edgeRate*100).toFixed(1) + "%";
+  document.getElementById("cornerBias").textContent = (cornerRate*100).toFixed(1) + "%";
+
+  // cluster score: average number of dangerous neighbors per dangerous tile in learned layouts (approx)
+  // We'll approximate using learned rates: higher neighbor correlations -> higher cluster score.
+  let cluster=0, clusterDen=0;
+  for(let i=0;i<N;i++){
+    const p = L.dangerCounts[i]/cases2;
+    const ns = neighbors(i);
+    const neighAvg = ns.reduce((acc,j)=>acc + (L.dangerCounts[j]/cases2),0)/ns.length;
+    cluster += p*neighAvg;
+    clusterDen += p;
+  }
+  const clusterScore = clusterDen>0 ? (cluster/clusterDen) : 0;
+  document.getElementById("clusterScore").textContent = (clusterScore*100).toFixed(1) + "%";
 }
 
-document.getElementById("newRoundBtn").addEventListener("click", newRound);
-document.getElementById("resetBtn").addEventListener("click", resetLearning);
-difficultyEl.addEventListener("change", ()=>{ newRound(); });
-simsEl.addEventListener("change", ()=>{ updateNPC(); });
+function render(){
+  diffVal.textContent = diffEl.value;
+  const tiles = document.querySelectorAll(".tile");
+  tiles.forEach(t=>{
+    const i = Number(t.dataset.idx);
+    setTileVisual(t,i);
+  });
+  renderCounts();
+  recommend();
+}
 
-newRound();
+/* =======================
+   Learning: user ends case
+======================= */
+function endCaseLearn(){
+  // We treat "Danger" marks as truth for this case
+  const dangerIdx = state.map((v,i)=>v===1?i:null).filter(v=>v!==null);
+
+  // update global learning
+  L.cases += 1;
+  dangerIdx.forEach(i=>{
+    L.dangerCounts[i] += 1;
+    L.totalDangerMarks += 1;
+  });
+
+  // optionally store last 50 layouts
+  const layout = state.map(v=>v===1?1:0);
+  L.layouts.unshift(layout);
+  if(L.layouts.length > 50) L.layouts.pop();
+
+  saveLearn(L);
+  L = loadLearn(); // refresh
+  // keep board as-is (so user sees what was learned), but update overlays
+  render();
+}
+
+function newCase(){
+  state = Array(N).fill(0);
+  render();
+}
+
+function resetLearning(){
+  localStorage.removeItem(KEY);
+  L = loadLearn();
+  state = Array(N).fill(0);
+  render();
+}
+
+/* =======================
+   Wire up
+======================= */
+buildGrid();
+document.getElementById("newCase").addEventListener("click", newCase);
+document.getElementById("learnCase").addEventListener("click", endCaseLearn);
+document.getElementById("resetAll").addEventListener("click", resetLearning);
+diffEl.addEventListener("input", ()=>render());
+
+render();
 </script>
-
 </body>
 </html>
