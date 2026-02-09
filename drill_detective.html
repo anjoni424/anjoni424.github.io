@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Drill Detective 🕵️‍♂️⛏️</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 18px; background: #0b1420; color: #e7eef8; }
+    .card { background: #121f2f; border: 1px solid #1f3550; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    h1 { margin: 0 0 10px; font-size: 20px; }
+    h2 { margin: 0 0 10px; font-size: 16px; opacity: .9; }
+    label { display:block; margin: 8px 0 4px; opacity: .9; }
+    input, button, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #284869;
+      background: #0f1b2a;
+      color: #e7eef8;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button { cursor:pointer; background: #18324a; border-color:#2a567e; }
+    button:hover { background:#1b3955; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .muted { opacity:.75; font-size: 13px; line-height: 1.35; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .pill { padding: 8px 10px; border-radius: 999px; border: 1px solid #2a567e; background:#0f1b2a; font-size: 13px; }
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #20364f; padding: 8px; text-align:left; vertical-align: top; }
+    .good { color: #59f7b0; }
+    .bad { color: #ff6b6b; }
+    .warn { color: #ffd166; }
+    .tiny { font-size: 12px; opacity:.8; }
+  </style>
+</head>
+<body>
+
+  <h1>Drill Detective 🕵️‍♂️⛏️</h1>
+  <div class="muted">
+    Record each round’s 3 drill multipliers, log who drilled deepest, and let the learner simulate the most likely next outcome.
+  </div>
+
+  <div class="card">
+    <h2>Round Setup</h2>
+
+    <label>Target Multiplier (target depth)</label>
+    <input id="target" type="number" step="0.01" min="0" placeholder="e.g. 2.00" />
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <label>🔷 Diamond result (x)</label>
+        <input id="d" type="number" step="0.01" min="0" placeholder="e.g. 3.25" />
+      </div>
+      <div>
+        <label>🟡 Circle result (x)</label>
+        <input id="c" type="number" step="0.01" min="0" placeholder="e.g. 2.21" />
+      </div>
+      <div>
+        <label>🟢 Triangle result (x)</label>
+        <input id="t" type="number" step="0.01" min="0" placeholder="e.g. 1.85" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="save">Save Round + Learn</button>
+      <button id="reset">Reset All Data</button>
+    </div>
+
+    <div id="status" class="tiny" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Prediction (Next Round)</h2>
+    <div class="muted">
+      Learns from your history. If one drill has a higher “beats target” rate or tends to drill deeper, it’ll start favoring it.
+    </div>
+
+    <label style="margin-top:10px;">Simulation count</label>
+    <select id="sims">
+      <option value="2000">2,000</option>
+      <option value="5000" selected>5,000</option>
+      <option value="10000">10,000</option>
+    </select>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="predict">Run Prediction</button>
+    </div>
+
+    <div id="predOut" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>History</h2>
+    <div class="muted">Newest first. “Deepest” = highest multiplier that round.</div>
+    <div style="overflow:auto; margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Target</th>
+            <th>🔷</th>
+            <th>🟡</th>
+            <th>🟢</th>
+            <th>Deepest</th>
+            <th>Hit Target</th>
+          </tr>
+        </thead>
+        <tbody id="hist"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+/**
+ * Drill Detective learner:
+ * - Stores rounds: {target, d, c, t, ts}
+ * - For each drill, learns:
+ *    - Beta prior for "beats target" probability (Thompson Sampling)
+ *    - Empirical samples for multipliers to simulate depth distribution
+ * - Prediction:
+ *    - For each simulation:
+ *        - sample a multiplier for each drill from its empirical history (with priors if empty)
+ *        - compute likely "winner" and "who beats target"
+ *    - Summarize results
+ */
+
+const KEY = "drill_detective_v1";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) ?? { rounds: [] }; }
+  catch { return { rounds: [] }; }
+}
+function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+function fmt(x) {
+  if (x == null || Number.isNaN(x)) return "";
+  return Number(x).toFixed(2) + "x";
+}
+
+function winnerName(d, c, t) {
+  const m = Math.max(d, c, t);
+  if (m === d) return "🔷 Diamond";
+  if (m === c) return "🟡 Circle";
+  return "🟢 Triangle";
+}
+
+function hitList(target, d, c, t) {
+  const hits = [];
+  if (d >= target) hits.push("🔷");
+  if (c >= target) hits.push("🟡");
+  if (t >= target) hits.push("🟢");
+  return hits.length ? hits.join(" ") : "—";
+}
+
+function renderHistory() {
+  const data = load();
+  const tbody = document.getElementById("hist");
+  tbody.innerHTML = "";
+  const rounds = [...data.rounds].reverse();
+  rounds.forEach((r, idx) => {
+    const tr = document.createElement("tr");
+    const deep = winnerName(r.d, r.c, r.t);
+    const hits = hitList(r.target, r.d, r.c, r.t);
+    tr.innerHTML = `
+      <td>${data.rounds.length - idx}</td>
+      <td>${fmt(r.target)}</td>
+      <td>${fmt(r.d)}</td>
+      <td>${fmt(r.c)}</td>
+      <td>${fmt(r.t)}</td>
+      <td>${deep}</td>
+      <td>${hits}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+function validateNum(x) {
+  const n = Number(x);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+// --- Learning helpers (no external libs) ---
+
+// Beta sampling via "Gamma trick" using simple Marsaglia/Tsang gamma sampler
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function gammaSample(k, theta=1) {
+  // Marsaglia and Tsang for k >= 1
+  if (k < 1) {
+    // Johnk's generator / transformation
+    const u = Math.random();
+    return gammaSample(1 + k, theta) * Math.pow(u, 1 / k);
+  }
+  const d = k - 1/3;
+  const c = 1 / Math.sqrt(9*d);
+  while (true) {
+    let x = randn();
+    let v = 1 + c*x;
+    if (v <= 0) continue;
+    v = v*v*v;
+    const u = Math.random();
+    if (u < 1 - 0.0331*(x*x)*(x*x)) return theta * d * v;
+    if (Math.log(u) < 0.5*x*x + d*(1 - v + Math.log(v))) return theta * d * v;
+  }
+}
+
+function betaSample(a, b) {
+  const x = gammaSample(a, 1);
+  const y = gammaSample(b, 1);
+  return x / (x + y);
+}
+
+function buildStats(rounds) {
+  // Empirical arrays per drill
+  const arr = { d: [], c: [], t: [] };
+  // Beta posterior params per drill for "beats target"
+  const beta = {
+    d: { a: 1, b: 1 },
+    c: { a: 1, b: 1 },
+    t: { a: 1, b: 1 },
+  };
+
+  for (const r of rounds) {
+    arr.d.push(r.d); arr.c.push(r.c); arr.t.push(r.t);
+
+    // Update beat-target posteriors
+    beta.d.a += (r.d >= r.target) ? 1 : 0;
+    beta.d.b += (r.d >= r.target) ? 0 : 1;
+
+    beta.c.a += (r.c >= r.target) ? 1 : 0;
+    beta.c.b += (r.c >= r.target) ? 0 : 1;
+
+    beta.t.a += (r.t >= r.target) ? 1 : 0;
+    beta.t.b += (r.t >= r.target) ? 0 : 1;
+  }
+  return { arr, beta };
+}
+
+function sampleMultiplier(empirical) {
+  // If we have history, bootstrap from it + tiny jitter.
+  if (empirical.length > 0) {
+    const x = empirical[Math.floor(Math.random() * empirical.length)];
+    const jitter = 1 + (Math.random() - 0.5) * 0.06; // ±3%
+    return Math.max(0, x * jitter);
+  }
+  // Prior if no data yet (gentle, not crazy)
+  // Most games cluster low multipliers with occasional higher spikes.
+  // We'll approximate with a skewed distribution: exp(U^2 * s)
+  const u = Math.random();
+  const base = Math.exp((u*u) * 2.2); // ~1.0 to ~9.0-ish
+  return base;
+}
+
+function runPrediction() {
+  const data = load();
+  const rounds = data.rounds;
+  const target = validateNum(document.getElementById("target").value) ?? 2.0;
+
+  const sims = Number(document.getElementById("sims").value) || 5000;
+  const { arr, beta } = buildStats(rounds);
+
+  // Thompson samples for "beats target" probabilities (gives a “who’s hot lately” vibe)
+  const pBeat = {
+    d: betaSample(beta.d.a, beta.d.b),
+    c: betaSample(beta.c.a, beta.c.b),
+    t: betaSample(beta.t.a, beta.t.b),
+  };
+
+  // Monte Carlo simulate next round multipliers
+  const winCounts = { d: 0, c: 0, t: 0 };
+  const hitCounts = { d: 0, c: 0, t: 0 };
+  let multiHit = 0;
+
+  for (let i = 0; i < sims; i++) {
+    // Blend: empirical multiplier sampling + a soft “beat target” bias
+    // (If pBeat is high, we slightly nudge multiplier upward around the target)
+    const md0 = sampleMultiplier(arr.d);
+    const mc0 = sampleMultiplier(arr.c);
+    const mt0 = sampleMultiplier(arr.t);
+
+    function nudge(m, p) {
+      if (m >= target) return m;
+      // With probability p, push it a bit toward/over target
+      if (Math.random() < p) {
+        const push = target * (0.95 + Math.random() * 0.30); // 0.95T to 1.25T
+        return Math.max(m, push);
+      }
+      return m;
+    }
+
+    const md = nudge(md0, pBeat.d);
+    const mc = nudge(mc0, pBeat.c);
+    const mt = nudge(mt0, pBeat.t);
+
+    const max = Math.max(md, mc, mt);
+    if (max === md) winCounts.d++;
+    else if (max === mc) winCounts.c++;
+    else winCounts.t++;
+
+    const hd = md >= target; const hc = mc >= target; const ht = mt >= target;
+    if (hd) hitCounts.d++;
+    if (hc) hitCounts.c++;
+    if (ht) hitCounts.t++;
+    if ((hd?1:0) + (hc?1:0) + (ht?1:0) >= 2) multiHit++;
+  }
+
+  function pct(n) { return (100 * n / sims).toFixed(1) + "%"; }
+  function top3(obj) {
+    const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+    return entries[0][0];
+  }
+
+  const likelyWinner = top3(winCounts);
+  const likelyHitter = top3(hitCounts);
+
+  const name = { d: "🔷 Diamond", c: "🟡 Circle", t: "🟢 Triangle" };
+
+  const out = document.getElementById("predOut");
+  out.innerHTML = `
+    <div class="row">
+      <div class="pill">Target: <b>${fmt(target)}</b></div>
+      <div class="pill">Rounds logged: <b>${rounds.length}</b></div>
+      <div class="pill">Simulations: <b>${sims.toLocaleString()}</b></div>
+    </div>
+
+    <div style="margin-top:10px;" class="card">
+      <div><b>Most likely to drill deepest next:</b> <span class="good">${name[likelyWinner]}</span></div>
+      <div class="tiny">Win chances (deepest): 🔷 ${pct(winCounts.d)} · 🟡 ${pct(winCounts.c)} · 🟢 ${pct(winCounts.t)}</div>
+    </div>
+
+    <div class="card">
+      <div><b>Most likely to hit the target next:</b> <span class="warn">${name[likelyHitter]}</span></div>
+      <div class="tiny">Hit chances (>= target): 🔷 ${pct(hitCounts.d)} · 🟡 ${pct(hitCounts.c)} · 🟢 ${pct(hitCounts.t)}</div>
+      <div class="tiny">Chance that <b>2+</b> drills hit target: ${pct(multiHit)}</div>
+    </div>
+
+    <div class="muted">
+      Learner note: this gets smarter after ~20–50 logged rounds. Before that it’s basically vibes + priors.
+    </div>
+  `;
+}
+
+// --- Wire up UI ---
+
+document.getElementById("save").addEventListener("click", () => {
+  const target = validateNum(document.getElementById("target").value);
+  const d = validateNum(document.getElementById("d").value);
+  const c = validateNum(document.getElementById("c").value);
+  const t = validateNum(document.getElementById("t").value);
+
+  if (target == null || d == null || c == null || t == null) {
+    setStatus("⚠️ Fill in target + all 3 results (numbers).");
+    return;
+  }
+
+  const data = load();
+  data.rounds.push({ target, d, c, t, ts: Date.now() });
+  save(data);
+
+  const deep = winnerName(d, c, t);
+  const hits = hitList(target, d, c, t);
+
+  setStatus(`✅ Saved. Deepest: ${deep}. Hit target: ${hits}`);
+  renderHistory();
+});
+
+document.getElementById("predict").addEventListener("click", () => runPrediction());
+
+document.getElementById("reset").addEventListener("click", () => {
+  localStorage.removeItem(KEY);
+  document.getElementById("predOut").innerHTML = "";
+  setStatus("🧼 Cleared all saved rounds.");
+  renderHistory();
+});
+
+renderHistory();
+</script>
+</body>
+</html>
