@@ -7,8 +7,8 @@
   <style>
     :root{
       --bg:#0b1520; --panel:#0f2232; --panel2:#102a3f; --text:#eaf2ff; --muted:#a9b6c9;
-      --tile:#1f3446; --tile2:#28485f; --tileBorder:rgba(255,255,255,.08);
-      --good:#29d391; --warn:#f6c343; --bad:#ff4d4d; --accent:#6aa6ff;
+      --tile:#1f3446; --tileBorder:rgba(255,255,255,.08);
+      --good:#29d391; --bad:#ff4d4d; --accent:#6aa6ff;
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial; background:radial-gradient(1200px 600px at 50% -20%, #1a3d5b 0%, var(--bg) 55%); color:var(--text)}
@@ -27,18 +27,17 @@
     select{background:rgba(255,255,255,.06); color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 10px; outline:none}
 
     .btns{display:flex; gap:10px; flex-wrap:wrap}
-    button{border:0; border-radius:12px; padding:10px 12px; font-weight:600; cursor:pointer; color:var(--text); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10)}
+    button{border:0; border-radius:12px; padding:10px 12px; font-weight:800; cursor:pointer; color:var(--text); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10)}
     button:hover{background:rgba(255,255,255,.12)}
-    button.primary{background:linear-gradient(180deg,#2a6dff,#1a4fd6); border-color:rgba(255,255,255,.12)}
-    button.primary:hover{filter:brightness(1.06)}
-    button.danger{background:linear-gradient(180deg,#ff4d4d,#d93a3a); border-color:rgba(255,255,255,.12)}
+    button.primary{background:linear-gradient(180deg,#2a6dff,#1a4fd6)}
+    button.danger{background:linear-gradient(180deg,#ff4d4d,#d93a3a)}
     button.ghost{background:transparent}
     button:disabled{opacity:.45; cursor:not-allowed}
 
     .hud{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-top:12px}
     .stat{background:linear-gradient(180deg,var(--panel2),rgba(16,42,63,.35)); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px}
     .k{font-size:11px; color:var(--muted)}
-    .v{font-size:18px; font-weight:800; margin-top:4px}
+    .v{font-size:18px; font-weight:900; margin-top:4px}
     .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.35}
 
     .main{display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:12px}
@@ -48,21 +47,22 @@
     .tile{aspect-ratio:1/1; border-radius:16px; background:linear-gradient(180deg,var(--tile),#152636);
       border:1px solid var(--tileBorder); display:flex; align-items:center; justify-content:center;
       position:relative; user-select:none; -webkit-tap-highlight-color:transparent;
-      transition:transform .08s ease, filter .12s ease, background .2s ease, box-shadow .2s ease;
+      transition:transform .08s ease, box-shadow .18s ease, outline-color .18s ease;
       font-size:22px; font-weight:900}
-    .tile:active{transform:scale(.98)}
+    .tile:active{transform:scale(.985)}
     .tile.revealed{background:linear-gradient(180deg,#143045,#0e2131)}
     .tile.safe{box-shadow:0 0 0 2px rgba(41,211,145,.25) inset}
     .tile.bomb{box-shadow:0 0 0 2px rgba(255,77,77,.22) inset}
+    .tile.labeling{outline:2px dashed rgba(106,166,255,.70); outline-offset:2px}
 
-    .heat{position:absolute; inset:0; border-radius:16px; opacity:.0; transition:opacity .18s ease}
-    .tile.showHeat .heat{opacity:.85}
+    .heat{position:absolute; inset:0; border-radius:16px; opacity:0; transition:opacity .18s ease}
+    .tile.showHeat .heat{opacity:.92}
 
     .badge{position:absolute; top:8px; left:8px; font-size:10px; color:rgba(255,255,255,.75); background:rgba(0,0,0,.22);
       border:1px solid rgba(255,255,255,.12); padding:3px 6px; border-radius:999px}
 
-    .rec{position:absolute; inset:-2px; border-radius:18px; border:2px solid rgba(106,166,255,.0); box-shadow:0 0 0 0 rgba(106,166,255,.0);
-      transition: all .18s ease}
+    .rec{position:absolute; inset:-2px; border-radius:18px; border:2px solid rgba(106,166,255,0);
+      box-shadow:0 0 0 rgba(106,166,255,0); transition:all .18s ease}
     .tile.recommended .rec{border-color:rgba(106,166,255,.85); box-shadow:0 0 18px rgba(106,166,255,.20)}
     .tile.backup .rec{border-color:rgba(106,166,255,.35)}
 
@@ -70,17 +70,16 @@
     .npcLine{display:flex; gap:10px; align-items:flex-start}
     .npcIcon{width:34px; height:34px; border-radius:12px; background:linear-gradient(180deg,#2b88ff,#1a4fd6); display:flex; align-items:center; justify-content:center; font-weight:900}
     .npcText{flex:1}
-    .npcText .big{font-weight:800; font-size:14px; margin:0}
+    .npcText .big{font-weight:900; font-size:14px; margin:0}
     .npcText .small{margin:6px 0 0; color:var(--muted); font-size:12px; line-height:1.4}
 
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
     @media (max-width:520px){.grid2{grid-template-columns:1fr}}
 
     .mini{background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:10px}
-    .mini .k{font-size:11px; color:var(--muted)}
-    .mini .v{font-size:13px; font-weight:800; margin-top:6px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 
-    .history{max-height:240px; overflow:auto; margin-top:10px; padding-right:4px}
+    .history{max-height:220px; overflow:auto; margin-top:10px; padding-right:4px}
     .hitem{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.10)}
     .hitem:last-child{border-bottom:0}
     .tag{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.82)}
@@ -90,10 +89,7 @@
     .toast{position:fixed; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(10,20,30,.92);
       border:1px solid rgba(255,255,255,.12); color:var(--text); padding:10px 12px; border-radius:12px; display:none;
       max-width:min(680px, calc(100% - 20px)); box-shadow:0 10px 30px rgba(0,0,0,.35); font-size:13px}
-    .toast.show{display:block; animation:pop .14s ease}
-    @keyframes pop{from{transform:translateX(-50%) translateY(6px); opacity:.0}to{transform:translateX(-50%) translateY(0); opacity:1}}
-
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .toast.show{display:block}
   </style>
 </head>
 <body>
@@ -104,7 +100,7 @@
         <div class="title">
           <div>
             <h1>Detective Mines 🕵️💣</h1>
-            <div class="sub">Seeded “case pool” mines with a learning NPC that narrows down which case you’re in. Heatmap shows bomb-likelihood. Nova-style recommends the best move (or cashout) without looping.</div>
+            <div class="sub">Nova shows predictions first. After the round, <b>you label a mine tile</b> so she learns. Heatmap blends “case pool” inference + your training memory.</div>
           </div>
           <div class="pill mono" id="seedPill">case: — • round: —</div>
         </div>
@@ -124,19 +120,21 @@
           </select>
           <label><input type="checkbox" id="heatToggle" checked /> Heatmap</label>
           <label><input type="checkbox" id="autoSuggest" checked /> Auto-suggest</label>
+          <label><input type="checkbox" id="trainMode" checked /> Training Mode</label>
         </div>
 
         <div class="btns">
           <button class="primary" id="startBtn">Start Round</button>
           <button class="danger" id="cashBtn" disabled>Cash Out</button>
-          <button class="ghost" id="revealAllBtn" disabled title="For debugging / showcase">Reveal Board</button>
+          <button class="ghost" id="revealAllBtn" disabled title="Demo / debug">Reveal Board</button>
+          <button class="ghost" id="resetTrainBtn" title="Clears local training memory">Reset Training</button>
         </div>
 
         <div class="hud">
-          <div class="stat"><div class="k">Multiplier</div><div class="v" id="mult">1.00x</div><div class="hint" id="multHint">Safe reveals increase this. Bomb = 0.</div></div>
-          <div class="stat"><div class="k">Pattern Locked</div><div class="v" id="lock">0.0%</div><div class="hint" id="lockHint">Fewer candidates = more certainty.</div></div>
-          <div class="stat"><div class="k">Candidates Left</div><div class="v" id="cand">256</div><div class="hint" id="candHint">NPC eliminates impossible cases after each safe reveal.</div></div>
-          <div class="stat"><div class="k">Best Next Move</div><div class="v" id="best">—</div><div class="hint" id="bestHint">Heatmap + Expected Value + anti-loop.</div></div>
+          <div class="stat"><div class="k">Multiplier</div><div class="v" id="mult">1.00x</div><div class="hint">Safe reveals increase this. Bomb = 0.</div></div>
+          <div class="stat"><div class="k">Pattern Locked</div><div class="v" id="lock">0.0%</div><div class="hint">Case pool certainty based on eliminated cases.</div></div>
+          <div class="stat"><div class="k">Candidates Left</div><div class="v" id="cand">256</div><div class="hint">Nova narrows these after each safe reveal.</div></div>
+          <div class="stat"><div class="k">Best Next Move</div><div class="v" id="best">—</div><div class="hint">Based on blended heatmap + EV + anti-loop.</div></div>
         </div>
       </div>
 
@@ -145,7 +143,7 @@
           <div class="npcIcon">N</div>
           <div class="npcText">
             <p class="big" id="npcBig">Nova: Ready when you are.</p>
-            <p class="small" id="npcSmall">Pick your mines, start the round, then tap tiles. I’ll narrow the case pool and light up the danger zones. 👀</p>
+            <p class="small" id="npcSmall">Start a round and I’ll show my prediction immediately. Then you’ll teach me by labeling a mine after the round. 🧠</p>
           </div>
         </div>
 
@@ -156,10 +154,16 @@
             <div class="hint" id="cashHint">Compares EV of clicking best tile vs locking in now.</div>
           </div>
           <div class="mini">
-            <div class="k">Round Stats</div>
-            <div class="v" id="roundStats">—</div>
-            <div class="hint">Revealed: <span id="revealedCt">0</span> • Mines: <span id="minesCt">—</span></div>
+            <div class="k">Prediction Snapshot</div>
+            <div class="v" id="predList">—</div>
+            <div class="hint">Top “likely mines” (from Nova’s blended model).</div>
           </div>
+        </div>
+
+        <div class="mini" id="trainPanel" style="margin-top:10px; display:none;">
+          <div class="k">Train Nova</div>
+          <div class="v">Tap ONE tile that was a 💣 mine</div>
+          <div class="hint" id="trainHint">Your label is saved locally and improves future predictions.</div>
         </div>
 
         <div class="mini" style="margin-top:10px">
@@ -173,30 +177,18 @@
       <div class="card board" id="board"></div>
 
       <div class="card panel">
-        <div class="title" style="margin-bottom:8px">
-          <div>
-            <div style="font-weight:900">How the Detective Brain Works</div>
-            <div class="sub">Every round secretly picks a <b>case</b> from a limited seed pool. Each safe reveal eliminates cases that would have put a bomb there. The remaining cases vote on each tile’s bomb probability.</div>
-          </div>
-        </div>
-
-        <div class="mini">
-          <div class="k">Controls</div>
-          <div class="hint">
-            • <b>Mines</b> dial changes risk + multiplier growth.<br>
-            • <b>Risk</b> changes how aggressive cashout advice is (0 = super safe, 100 = chaotic).<br>
-            • <b>Heatmap</b> paints bomb-likelihood. Red = spicy.<br>
-            • <b>Auto-suggest</b> highlights best tile + backups.
-          </div>
+        <div style="font-weight:900">How it learns</div>
+        <div class="sub" style="margin-top:6px">
+          Nova’s heatmap is a blend: <b>(A)</b> case-pool inference + <b>(B)</b> your labeled mine tiles.
+          The more you label, the more the learned model influences predictions.
         </div>
 
         <div class="mini" style="margin-top:10px">
-          <div class="k">Dev Notes</div>
+          <div class="k">Training Notes</div>
           <div class="hint">
-            • Offline-only. No server needed.<br>
-            • Uses 256 cases (fast). You can bump to 1024 later.<br>
-            • Anti-loop adds a penalty if the same tile is recommended repeatedly.<br>
-            • “Reveal Board” is for demo/debug.
+            • After every round (cashout or boom), Nova asks you to label <b>one mine tile</b>.<br>
+            • Labels are stored in <span class="mono">localStorage</span> on your device.<br>
+            • Use “Reset Training” if you want a clean slate.
           </div>
         </div>
       </div>
@@ -216,8 +208,11 @@
     const TILE_COUNT = 25;
     const GRID = 5;
 
-    // Small EV dampener to keep the “cashout vs continue” balance sane
+    // tiny EV dampener for balance
     const HOUSE_EDGE = 0.02;
+
+    const TRAIN_KEY = "detective_mines_training_v1";
+    const HISTORY_KEY = "detective_mines_history_v1";
 
     const $ = (id) => document.getElementById(id);
 
@@ -267,20 +262,68 @@
       exploded:false,
       multiplier:1,
       candidates:[],
-      lastRecs:[], // anti-loop memory
+      lastRecs:[],
+      awaitingMineLabel:false,
       history:[]
     };
 
-    // Load history
-    try{
-      const saved = localStorage.getItem('detective_mines_history_v1');
-      if(saved) state.history = JSON.parse(saved);
-    }catch(e){}
+    // training: { [mineCount]: { tileCounts:[25], total:number } }
+    let training = {};
+
+    function loadLocal(){
+      try{
+        const h = localStorage.getItem(HISTORY_KEY);
+        if(h) state.history = JSON.parse(h);
+      }catch(e){}
+      try{
+        const t = localStorage.getItem(TRAIN_KEY);
+        if(t) training = JSON.parse(t);
+      }catch(e){}
+    }
 
     function saveHistory(){
       try{
-        localStorage.setItem('detective_mines_history_v1', JSON.stringify(state.history.slice(0,60)));
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history.slice(0,60)));
       }catch(e){}
+    }
+
+    function saveTraining(){
+      try{
+        localStorage.setItem(TRAIN_KEY, JSON.stringify(training));
+      }catch(e){}
+    }
+
+    /*********************
+     * Training helpers
+     *********************/
+    function getTrainingBucket(mineCount){
+      const key = String(mineCount);
+      if(!training[key]){
+        training[key] = { tileCounts: Array(25).fill(0), total: 0 };
+      }
+      return training[key];
+    }
+
+    function trainingProbs(mineCount){
+      const b = getTrainingBucket(mineCount);
+      // Laplace smoothing to avoid overconfidence early
+      const smooth = 1;
+      const denom = b.total + smooth * 25;
+      return b.tileCounts.map(c => (c + smooth) / denom);
+    }
+
+    function blendedProbs(caseProbs, mineCount){
+      const learned = trainingProbs(mineCount);
+      const b = getTrainingBucket(mineCount);
+      // As labels increase, rely more on learned data (max 55%)
+      const learnStrength = Math.min(0.55, b.total / 40);
+      const alpha = 1 - learnStrength; // weight on case model
+
+      const out = [];
+      for(let i=0;i<25;i++){
+        out[i] = (caseProbs[i] * alpha) + (learned[i] * (1 - alpha));
+      }
+      return out;
     }
 
     /*********************
@@ -299,9 +342,8 @@
         const ds = dayStamp();
         let acc = 0;
         for(let i=0;i<ds.length;i++) acc = hash32(acc, ds.charCodeAt(i));
-        return (hash32(acc, bombCount) % NUM_CASES) >>> 0;
+        return (hash32(acc, bombCount, roundIndex) % NUM_CASES) >>> 0;
       }
-      // session variety
       const r = (Math.random() * 1e9) >>> 0;
       return (hash32(r, bombCount, roundIndex) % NUM_CASES) >>> 0;
     }
@@ -332,7 +374,7 @@
       }
     }
 
-    function heatmapProbs(){
+    function heatmapCaseProbs(){
       const probs = Array(TILE_COUNT).fill(0);
       const cand = state.candidates;
       const bombCount = state.bombCount;
@@ -353,7 +395,7 @@
      * Multiplier curve
      *********************/
     function nextMultiplier(current, bombCount, revealedSafeCount){
-      const danger = bombCount / TILE_COUNT; // 0..1
+      const danger = bombCount / TILE_COUNT;
       const baseGain = 0.045 + 0.22 * danger;
       const streakBonus = Math.min(0.08, revealedSafeCount * 0.006);
       const gain = baseGain + streakBonus;
@@ -372,9 +414,6 @@
     function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
     function recommendMoves(probs){
-      // For each unrevealed tile, compute EV of clicking it.
-      // EV(click) ≈ pSafe*(expected multiplier after safe) + (1-pSafe)*0  minus edge
-      // Compare EV(click) against EV(cashout)=current multiplier (handled separately)
       const revealed = state.revealed;
       const bombCount = state.bombCount;
       const safeCount = state.safe.size;
@@ -386,24 +425,20 @@
         const pBomb = probs[i];
         const pSafe = 1 - pBomb;
 
-        // Multiplier if safe
         const mNext = nextMultiplier(state.multiplier, bombCount, safeCount);
 
-        // baseline EV of click
         let ev = (pSafe * mNext);
-
-        // slight “edge” to make cashout meaningful (game balancing)
         ev *= (1 - HOUSE_EDGE);
 
-        // anti-loop: if we’ve recommended this tile recently, nudge down
+        // anti-loop
         const recentIndex = state.lastRecs.lastIndexOf(i);
         if(recentIndex !== -1){
-          const age = (state.lastRecs.length - 1) - recentIndex; // 0 is most recent
-          const penalty = 0.08 * (1 / (age + 1)); // stronger if super recent
+          const age = (state.lastRecs.length - 1) - recentIndex;
+          const penalty = 0.08 * (1 / (age + 1));
           ev *= (1 - penalty);
         }
 
-        // small bias to keep choices varied (and reduce “always top-left” vibes)
+        // subtle variety bias
         const centerBias = 1 - (Math.abs((i%5)-2) + Math.abs(Math.floor(i/5)-2)) * 0.015;
         ev *= centerBias;
 
@@ -411,45 +446,30 @@
       }
 
       scored.sort((a,b)=>b.ev - a.ev);
-
-      const best = scored[0] || null;
-      const backups = scored.slice(1,3);
-
-      return {best, backups, scored};
+      return {best: scored[0] || null, backups: scored.slice(1,3), scored};
     }
 
     function cashoutAdvice(best){
       if(!state.running || state.exploded) return {text:"—", hint:""};
 
-      const risk = state.risk / 100; // 0 safe, 1 yolo
-
+      const risk = state.risk / 100;
       const cashEV = state.multiplier;
 
       if(!best){
-        return {text:"Cash out", hint:"No safe candidates found."};
+        return {text:"Cash out ✅", hint:"No candidates to recommend."};
       }
 
-      // Continue EV: EV of best click
       const contEV = best.ev;
-
-      // Decision threshold: safer players cash sooner, risky players push longer
-      const margin = 0.02 + (0.10 * (1 - risk)); // safe => bigger margin needed to continue
+      const margin = 0.02 + (0.10 * (1 - risk)); // safe => cash earlier
 
       if(cashEV >= contEV * (1 - margin)){
-        return {
-          text: `Cash out now ✅`,
-          hint: `Locking ${cashEV.toFixed(2)}x beats/equals clicking (${contEV.toFixed(2)}x EV).`
-        };
+        return {text:`Cash out now ✅`, hint:`Locking ${cashEV.toFixed(2)}x is safer than clicking (${contEV.toFixed(2)}x EV).`};
       }
-
-      return {
-        text: `Keep going 🔥`,
-        hint: `Best click EV (${contEV.toFixed(2)}x) edges out cashout (${cashEV.toFixed(2)}x).`
-      };
+      return {text:`Keep going 🔥`, hint:`Best click EV (${contEV.toFixed(2)}x) edges out cashout (${cashEV.toFixed(2)}x).`};
     }
 
     /*********************
-     * UI rendering
+     * UI helpers
      *********************/
     function toast(msg){
       const t = $("toast");
@@ -459,34 +479,7 @@
       toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
     }
 
-    function renderHistory(){
-      const el = $("history");
-      const h = state.history.slice(0,20);
-      if(h.length === 0){
-        el.innerHTML = `<div class="hint">No rounds yet. Nova is bored. 😶</div>`;
-        return;
-      }
-      el.innerHTML = h.map(item=>{
-        const tag = item.result === "WIN"
-          ? `<span class="tag win">WIN</span>`
-          : `<span class="tag lose">LOSE</span>`;
-        return `
-          <div class="hitem">
-            <div>
-              <div style="font-weight:800">${tag} <span class="mono">m=${item.mines}</span> • <span class="mono">r=${item.round}</span></div>
-              <div class="hint">safe=${item.safe} • locked=${item.locked.toFixed(1)}% • mode=${item.mode}</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-weight:900">${item.mult.toFixed(2)}x</div>
-              <div class="hint">${item.when}</div>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
     function heatColor(pBomb){
-      // green -> yellow -> red
       const p = clamp01(pBomb);
       const r = Math.round(40 + 215 * p);
       const g = Math.round(200 - 170 * p);
@@ -496,8 +489,7 @@
 
     function clearRecommendations(){
       for(let i=0;i<TILE_COUNT;i++){
-        const tile = $("tile-"+i);
-        tile?.classList.remove("recommended","backup");
+        $("tile-"+i)?.classList.remove("recommended","backup");
       }
     }
 
@@ -507,21 +499,31 @@
         const tile = $("tile-"+i);
         if(!tile) continue;
         const heat = tile.querySelector(".heat");
-        if(!heat) continue;
+        const badge = tile.querySelector(".badge");
+        if(!heat || !badge) continue;
 
         const hidden = state.revealed.has(i);
-        const p = probs[i];
 
         if(show && !hidden){
           tile.classList.add("showHeat");
-          heat.style.background = `radial-gradient(120px 120px at 50% 50%, ${heatColor(p)} 0%, rgba(0,0,0,0) 65%)`;
-          tile.querySelector(".badge").textContent = `${Math.round(p*100)}%`;
+          heat.style.background = `radial-gradient(120px 120px at 50% 50%, ${heatColor(probs[i])} 0%, rgba(0,0,0,0) 65%)`;
+          badge.textContent = `${Math.round(probs[i]*100)}%`;
         }else{
           tile.classList.remove("showHeat");
           heat.style.background = "transparent";
-          tile.querySelector(".badge").textContent = "";
+          badge.textContent = "";
         }
       }
+    }
+
+    function setTileFace(i, emoji, cls){
+      const tile = $("tile-"+i);
+      if(!tile) return;
+      tile.classList.add("revealed");
+      if(cls) tile.classList.add(cls);
+      tile.querySelector(".face").textContent = emoji;
+      tile.querySelector(".badge").textContent = "";
+      tile.classList.remove("showHeat");
     }
 
     function renderBoard(){
@@ -537,6 +539,43 @@
       }
     }
 
+    function renderHistory(){
+      const el = $("history");
+      const h = state.history.slice(0,20);
+      if(h.length === 0){
+        el.innerHTML = `<div class="hint">No rounds yet. Nova is waiting. 😶</div>`;
+        return;
+      }
+      el.innerHTML = h.map(item=>{
+        const tag = item.result === "WIN"
+          ? `<span class="tag win">WIN</span>`
+          : `<span class="tag lose">LOSE</span>`;
+        return `
+          <div class="hitem">
+            <div>
+              <div style="font-weight:900">${tag} <span class="mono">m=${item.mines}</span> • <span class="mono">r=${item.round}</span></div>
+              <div class="hint">safe=${item.safe} • locked=${item.locked.toFixed(1)}% • labels=${item.labels}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:900">${item.mult.toFixed(2)}x</div>
+              <div class="hint">${item.when}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updatePredSnapshot(probs){
+      const unrevealed = [];
+      for(let i=0;i<TILE_COUNT;i++){
+        if(state.revealed.has(i)) continue;
+        unrevealed.push({i, p: probs[i]});
+      }
+      unrevealed.sort((a,b)=>b.p - a.p);
+      const top = unrevealed.slice(0,3).map(x=>`${formatTile(x.i)} (${Math.round(x.p*100)}%)`).join(" • ");
+      $("predList").textContent = top || "—";
+    }
+
     function updateHUD(recs, probs){
       $("mult").textContent = `${state.multiplier.toFixed(2)}x`;
 
@@ -544,12 +583,10 @@
       $("lock").textContent = `${locked.toFixed(1)}%`;
       $("cand").textContent = `${state.candidates.length}`;
 
-      $("revealedCt").textContent = state.revealed.size;
-      $("minesCt").textContent = state.bombCount;
-      $("roundStats").textContent = state.running ? `Round ${state.roundIndex} • ${state.exploded ? "ENDED" : "LIVE"}` : "—";
-
       const pill = `case: ${state.running ? state.caseId : "—"} • round: ${state.running ? state.roundIndex : "—"}`;
       $("seedPill").textContent = pill;
+
+      updatePredSnapshot(probs);
 
       if(!state.running){
         $("best").textContent = "—";
@@ -568,52 +605,53 @@
       $("cashAdvice").textContent = advice.text;
       $("cashHint").textContent = advice.hint || $("cashHint").textContent;
 
-      // NPC narration
-      const risk = state.risk;
-      if(state.exploded){
-        $("npcBig").textContent = "Nova: Boom. Case closed. 💣";
-        $("npcSmall").textContent = "We learned something. Start a new round and I’ll lock the pattern faster.";
-      }else{
-        const topLine = recs?.best
-          ? `Nova: Tap ${formatTile(recs.best.i)}.`
-          : `Nova: I need one safe reveal to start locking the case.`;
-        const extra = recs?.best
-          ? `Candidates: ${state.candidates.length}. Heatmap updated. Your risk dial is ${risk} — I’m ${risk<40?"playing it safe":"feeling spicy"}.`
-          : `Set mines and start — then I’ll do detective things.`;
-        $("npcBig").textContent = topLine;
-        $("npcSmall").textContent = extra;
+      // NPC voice
+      if(state.awaitingMineLabel){
+        $("npcBig").textContent = "Nova: Teach me. 🧠";
+        $("npcSmall").textContent = "Tap ONE tile that was a mine. I’ll remember it for this mine-count.";
+        return;
       }
 
-      // heatmap
+      if(state.exploded){
+        $("npcBig").textContent = "Nova: Boom. Case closed. 💣";
+        $("npcSmall").textContent = "Start another round and label a mine so I learn faster next time.";
+      }else{
+        if(recs?.best){
+          $("npcBig").textContent = `Nova: Prediction first — then tap ${formatTile(recs.best.i)}.`;
+          $("npcSmall").textContent = `Top mine suspects are listed on the right. Your risk dial is ${state.risk}… so I’m ${state.risk<40?"playing it safe":"feeling spicy"}.`;
+        }else{
+          $("npcBig").textContent = "Nova: Start the round and I’ll show my prediction.";
+          $("npcSmall").textContent = "Heatmap + suspects list will appear instantly.";
+        }
+      }
+
       applyHeatmap(probs);
 
-      // recommendations
       clearRecommendations();
       if($("autoSuggest").checked && recs?.best){
-        const bestTile = $("tile-"+recs.best.i);
-        bestTile?.classList.add("recommended");
+        $("tile-"+recs.best.i)?.classList.add("recommended");
         for(const b of recs.backups || []){
           $("tile-"+b.i)?.classList.add("backup");
         }
       }
     }
 
-    function setTileFace(i, emoji, cls){
-      const tile = $("tile-"+i);
-      if(!tile) return;
-      tile.classList.add("revealed");
-      if(cls) tile.classList.add(cls);
-      tile.querySelector(".face").textContent = emoji;
-      tile.querySelector(".badge").textContent = "";
-      tile.classList.remove("showHeat");
-    }
-
     /*********************
      * Game actions
      *********************/
+    function computeProbs(){
+      let probs = heatmapCaseProbs();
+      if($("trainMode").checked){
+        probs = blendedProbs(probs, state.bombCount);
+      }
+      return probs;
+    }
+
     function startRound(){
       state.running = true;
       state.exploded = false;
+      state.awaitingMineLabel = false;
+
       state.revealed = new Set();
       state.safe = new Set();
       state.multiplier = 1;
@@ -628,20 +666,40 @@
       resetNPC();
       renderBoard();
 
+      $("trainPanel").style.display = "none";
       $("cashBtn").disabled = false;
       $("revealAllBtn").disabled = false;
 
-      // first HUD update (uniform-ish heatmap until first safe reveal)
-      const probs = heatmapProbs();
+      // SHOW prediction immediately (before user clicks)
+      const probs = computeProbs();
       const recs = recommendMoves(probs);
       updateHUD(recs, probs);
 
-      toast("Round started. Nova is on the case. 🕵️");
+      toast("Prediction is up. Your move. 🕵️");
+    }
+
+    function beginMineLabeling(){
+      if(!$("trainMode").checked) return;
+      state.awaitingMineLabel = true;
+      $("trainPanel").style.display = "block";
+      $("trainHint").textContent = "Tap ONE tile that was a mine 💣. This is saved locally and improves future predictions.";
+
+      for(let i=0;i<TILE_COUNT;i++){
+        $("tile-"+i)?.classList.add("labeling");
+      }
+    }
+
+    function stopMineLabeling(){
+      state.awaitingMineLabel = false;
+      $("trainPanel").style.display = "none";
+      for(let i=0;i<TILE_COUNT;i++){
+        $("tile-"+i)?.classList.remove("labeling");
+      }
     }
 
     function endRound(result){
-      const mode = $("modeSelect").value;
       const locked = 100 * (1 - (state.candidates.length / NUM_CASES));
+      const labels = getTrainingBucket(state.bombCount).total;
 
       const now = new Date();
       const when = now.toLocaleString([], {month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
@@ -653,7 +711,7 @@
         safe: state.safe.size,
         mult: state.multiplier,
         locked,
-        mode,
+        labels,
         when
       });
       state.history = state.history.slice(0,60);
@@ -663,11 +721,14 @@
       $("cashBtn").disabled = true;
       $("revealAllBtn").disabled = true;
 
+      // stop gameplay, then ask for labeling
       state.running = false;
-      // increment round index for next start
+      beginMineLabeling();
+
+      // increment for next round start
       state.roundIndex += 1;
 
-      const probs = heatmapProbs();
+      const probs = computeProbs();
       updateHUD(null, probs);
     }
 
@@ -675,7 +736,7 @@
       if(!state.running || state.exploded) return;
       toast(`Cashed out at ${state.multiplier.toFixed(2)}x ✅`);
       $("npcBig").textContent = "Nova: Clean exit.";
-      $("npcSmall").textContent = "We take the multiplier and we walk away like professionals.";
+      $("npcSmall").textContent = "Now label a mine so I get smarter.";
       endRound("WIN");
     }
 
@@ -690,6 +751,23 @@
     }
 
     function onTile(i){
+      // TRAINING LABEL MODE:
+      if(state.awaitingMineLabel){
+        const b = getTrainingBucket(state.bombCount);
+        b.tileCounts[i] += 1;
+        b.total += 1;
+        saveTraining();
+
+        stopMineLabeling();
+        toast(`Mine recorded at ${formatTile(i)} ✅ Nova learned.`);
+
+        $("npcBig").textContent = "Nova: Noted.";
+        $("npcSmall").textContent = "Start the next round. I’ll fold this into my prediction.";
+
+        return;
+      }
+
+      // NORMAL PLAY MODE:
       if(!state.running || state.exploded) return;
       if(state.revealed.has(i)) return;
 
@@ -699,7 +777,7 @@
         state.exploded = true;
         setTileFace(i, "💣", "bomb");
 
-        // optionally show all bombs for clarity
+        // show all bombs for clarity
         for(let t=0;t<TILE_COUNT;t++){
           if(!state.revealed.has(t) && state.bombs.has(t)){
             setTileFace(t, "💣", "bomb");
@@ -709,7 +787,7 @@
 
         toast("Bomb. Round lost. 💥");
         $("npcBig").textContent = "Nova: That tile was cursed.";
-        $("npcSmall").textContent = "We’ll lock the pattern faster next time.";
+        $("npcSmall").textContent = "Label a mine so I can learn the pattern better.";
 
         endRound("LOSE");
         return;
@@ -719,16 +797,16 @@
       state.safe.add(i);
       setTileFace(i, "💎", "safe");
 
-      // update multiplier
+      // multiplier
       state.multiplier = nextMultiplier(state.multiplier, state.bombCount, state.safe.size);
-      // eliminate cases based on safe reveal
+
+      // case elimination learns from SAFE reveals
       eliminateCases();
 
-      // compute heatmap + recommendations
-      const probs = heatmapProbs();
+      // recompute heatmap + suggestions
+      const probs = computeProbs();
       const recs = recommendMoves(probs);
 
-      // update anti-loop memory with best suggestion
       if(recs?.best){
         state.lastRecs.push(recs.best.i);
         if(state.lastRecs.length > 8) state.lastRecs.shift();
@@ -736,10 +814,19 @@
 
       updateHUD(recs, probs);
 
-      // subtle “Nova” toast if pattern is locking
       const locked = 100 * (1 - (state.candidates.length / NUM_CASES));
-      if(locked >= 85 && locked < 90) toast("Pattern is snapping into place…");
-      if(locked >= 95) toast("Pattern locked. Nova sees everything. 👁️");
+      if(locked >= 95) toast("Pattern locked. Nova sees it. 👁️");
+    }
+
+    function resetTraining(){
+      training = {};
+      saveTraining();
+      toast("Training cleared. Fresh brain. 🧼");
+      // refresh prediction if running
+      const probs = computeProbs();
+      const recs = recommendMoves(probs);
+      updateHUD(recs, probs);
+      renderHistory();
     }
 
     /*********************
@@ -753,9 +840,8 @@
       const v = parseInt(e.target.value, 10);
       $("riskLabel").textContent = v;
       state.risk = v;
-      // refresh advice if running
       if(state.running){
-        const probs = heatmapProbs();
+        const probs = computeProbs();
         const recs = recommendMoves(probs);
         updateHUD(recs, probs);
       }
@@ -764,16 +850,16 @@
     $("startBtn").addEventListener("click", startRound);
     $("cashBtn").addEventListener("click", cashOut);
     $("revealAllBtn").addEventListener("click", revealAll);
+    $("resetTrainBtn").addEventListener("click", resetTraining);
 
-    // init UI
+    // init
+    loadLocal();
     renderBoard();
     renderHistory();
     $("mineLabel").textContent = $("mineSlider").value;
     $("riskLabel").textContent = $("riskSlider").value;
-    $("lock").textContent = "0.0%";
     $("cand").textContent = String(NUM_CASES);
-    $("npcBig").textContent = "Nova: Ready when you are.";
-    $("npcSmall").textContent = "Start a round and I’ll narrow the case pool as you reveal safe tiles.";
+    $("lock").textContent = "0.0%";
   </script>
 </body>
 </html>
