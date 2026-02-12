@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Detective Mines V1.5 🕵️💣</title>
+<style>
+:root{--bg:#0b1520;--panel:#0f2232;--panel2:#102a3f;--text:#eaf2ff;--muted:#a9b6c9;--tile:#1f3446;--tile2:#152636;--border:rgba(255,255,255,.08);--good:#29d391;--bad:#ff4d4d;--accent:#6aa6ff;}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;background:radial-gradient(1200px 600px at 50% -20%, #1a3d5b 0%, var(--bg) 55%);color:var(--text)}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 14px 30px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--panel),#0c1b28);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+h1{margin:0;font-size:18px;letter-spacing:.2px}
+.sub{color:var(--muted);font-size:12px;line-height:1.35;margin-top:6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tab{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);cursor:pointer;font-weight:900;font-size:12px}
+.tab.active{background:linear-gradient(180deg,#2a6dff,#1a4fd6)}
+label{font-size:12px;color:var(--muted)}
+input[type=range]{width:220px}
+input[type=number]{width:96px}
+select,input[type=number],textarea{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;outline:none}
+textarea{width:100%;min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;line-height:1.35}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+button{border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer;color:var(--text);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
+button:hover{background:rgba(255,255,255,.12)}
+button.primary{background:linear-gradient(180deg,#2a6dff,#1a4fd6)}
+button.good{background:linear-gradient(180deg,#29d391,#1aa96f)}
+button.danger{background:linear-gradient(180deg,#ff4d4d,#d93a3a)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+@media (max-width:980px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:linear-gradient(180deg,var(--panel2),rgba(16,42,63,.35));border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px}
+.k{font-size:11px;color:var(--muted)}
+.v{font-size:15px;font-weight:900;margin-top:4px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
+.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:12px}
+.tile{aspect-ratio:1/1;border-radius:16px;background:linear-gradient(180deg,var(--tile),var(--tile2));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer;transition:transform .08s ease, box-shadow .18s ease}
+.tile:active{transform:scale(.985)}
+.heat{position:absolute;inset:0;border-radius:16px;opacity:.92}
+.badge{position:absolute;top:8px;left:8px;font-size:10px;color:rgba(255,255,255,.80);background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);padding:3px 6px;border-radius:999px}
+.mark{position:absolute;inset:-2px;border-radius:18px;border:2px dashed rgba(106,166,255,0);transition:all .14s ease}
+.tile.markMine .mark{border-color:rgba(255,77,77,.90)}
+.tile.markGem .mark{border-color:rgba(41,211,145,.90)}
+.face{position:relative;font-size:22px;font-weight:900}
+.tile.predMine{box-shadow:0 0 0 2px rgba(255,77,77,.20) inset}
+.tile.predGem{box-shadow:0 0 0 2px rgba(41,211,145,.16) inset}
+.npc{display:flex;gap:10px;align-items:flex-start}
+.npcIcon{width:34px;height:34px;border-radius:12px;background:linear-gradient(180deg,#2b88ff,#1a4fd6);display:flex;align-items:center;justify-content:center;font-weight:900}
+.npc .big{font-weight:900;font-size:14px;margin:0}
+.npc .small{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(10,20,30,.92);border:1px solid rgba(255,255,255,.12);color:var(--text);padding:10px 12px;border-radius:12px;display:none;max-width:min(860px,calc(100% - 20px));box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13px}
+.toast.show{display:block}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1>Detective Mines V1.5 🕵️💣</h1>
+        <div class="sub">AI lab mode. The board is always revealed as <b>Nova’s prediction</b>. You label multiple TRUE 💣 mines / 💎 gems, then Nova updates her model. Models are separate per mine-count, but also learn cross-mine patterns through a global model.</div>
+      </div>
+      <div class="pill mono" id="metaPill">round: 1 • labels: 0</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="tabTrain">Training Mode</div>
+      <div class="tab" id="tabAdv">Advisor Mode</div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="card">
+      <div id="trainPanel">
+        <div class="row">
+          <label>Mines: <b id="mineLabel">8</b></label>
+          <input id="mineSlider" type="range" min="1" max="24" value="8"/>
+          <label>Risk: <b id="riskLabel">55</b></label>
+          <input id="riskSlider" type="range" min="0" max="100" value="55"/>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <label>Prediction View</label>
+          <select id="predView">
+            <option value="split">Split (top M = mines)</option>
+            <option value="heat">Heatmap only</option>
+          </select>
+          <label><input type="checkbox" id="showPct" checked/> show %</label>
+          <label><input type="checkbox" id="centerPrior" checked/> center prior</label>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <label>Marking Tool</label>
+          <select id="markTool">
+            <option value="mine">Mark TRUE Mine 💣</option>
+            <option value="gem">Mark TRUE Gem 💎</option>
+            <option value="erase">Eraser</option>
+          </select>
+          <div class="pill">Tap tiles to toggle marks</div>
+        </div>
+        <div class="btns">
+          <button class="primary" id="newPredBtn">New Prediction Round</button>
+          <button class="good" id="learnBtn">Submit Labels & Learn</button>
+          <button id="clearMarksBtn">Clear Marks</button>
+          <button id="exportBtn">Export Training</button>
+          <button id="importBtn">Import Training</button>
+          <button class="danger" id="resetBtn">Reset All</button>
+        </div>
+      </div>
+
+      <div id="advPanel" class="hidden">
+        <div class="row">
+          <label>Mines</label><input id="advMines" type="number" min="1" max="24" value="8"/>
+          <label>Turns ahead</label><input id="advTurns" type="number" min="1" max="24" value="5"/>
+          <label>Pattern</label>
+          <select id="advPattern">
+            <option value="sequence">Safest sequence</option>
+            <option value="cluster">Safest cluster</option>
+          </select>
+        </div>
+        <div class="btns">
+          <button class="primary" id="advRun">Run Advisor</button>
+          <button id="advExport">Export Training</button>
+          <button id="advImport">Import Training</button>
+        </div>
+        <div class="sub" style="margin-top:8px">Advisor uses <b>trained data only</b> (global + per-mine) to suggest safe picks for the next N turns.</div>
+        <div class="stat" style="margin-top:10px">
+          <div class="k">Advisor Output</div>
+          <div class="v mono" id="advOut" style="font-size:12px;white-space:pre-wrap">—</div>
+        </div>
+      </div>
+
+      <div class="hud">
+        <div class="stat"><div class="k">Safest Next Tile</div><div class="v" id="safeNext">—</div><div class="hint">Lowest predicted mine %.</div></div>
+        <div class="stat"><div class="k">Top Mine Suspects</div><div class="v" id="mineSus">—</div><div class="hint">Highest predicted mine %.</div></div>
+        <div class="stat"><div class="k">Training Samples</div><div class="v" id="trainCt">0</div><div class="hint">Per-mine + global labels.</div></div>
+        <div class="stat"><div class="k">Blend</div><div class="v" id="blendNote">—</div><div class="hint" id="blendHint">Per-mine grows as you label more.</div></div>
+      </div>
+
+      <div class="stat" style="margin-top:10px">
+        <div class="npc">
+          <div class="npcIcon">N</div>
+          <div>
+            <p class="big" id="npcBig">Nova: Ready.</p>
+            <p class="small" id="npcSmall">Hit “New Prediction Round”, label TRUE mines/gems, then submit & learn.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat" style="margin-top:10px">
+        <div class="k">Import / Export box</div>
+        <div class="hint">Export puts JSON here. Import reads JSON from here.</div>
+        <textarea id="ioBox" spellcheck="false" placeholder="Training JSON will appear here…"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="k">Prediction Board (always revealed)</div>
+      <div class="sub" style="margin-top:6px">Heat overlay = predicted mine likelihood. Split view tags top M tiles as predicted 💣 mines.</div>
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TILE_COUNT = 25, GRID = 5;
+const TRAIN_KEY = "detective_mines_training_v15";
+const $ = (id)=>document.getElementById(id);
+
+function freshBucket(){ return {mine:Array(25).fill(0), gem:Array(25).fill(0), mineTotal:0, gemTotal:0}; }
+function freshTraining(){ return {global:freshBucket(), byMines:{}}; }
+
+let training = null;
+let round = 1;
+
+let marksMine = new Set();
+let marksGem = new Set();
+
+function getBucket(m){
+  const k = String(m);
+  if(!training.byMines[k]) training.byMines[k] = freshBucket();
+  return training.byMines[k];
+}
+
+function loadTraining(){
+  try{
+    const raw = localStorage.getItem(TRAIN_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return freshTraining();
+}
+function saveTraining(){
+  try{ localStorage.setItem(TRAIN_KEY, JSON.stringify(training)); }catch(e){}
+}
+
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function fmtTile(i){ const r=Math.floor(i/GRID)+1, c=(i%GRID)+1; return `R${r}C${c}`; }
+function heatColor(p){
+  const x = clamp01(p);
+  const r = Math.round(40 + 215*x);
+  const g = Math.round(200 - 170*x);
+  const b = Math.round(80 - 60*x);
+  return `rgba(${r},${g},${b},0.45)`;
+}
+function logit(p){ p=clamp01(p); p=Math.min(0.999,Math.max(0.001,p)); return Math.log(p/(1-p)); }
+function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+function bucketLocalP(bucket){
+  const out = Array(25).fill(0.5);
+  for(let i=0;i<25;i++){
+    const mine=bucket.mine[i], gem=bucket.gem[i];
+    out[i] = (mine + 1) / (mine + gem + 2);
+  }
+  return out;
+}
+function centerOffsets(){
+  const off = Array(25).fill(0);
+  for(let i=0;i<25;i++){
+    const x=(i%5)-2, y=Math.floor(i/5)-2;
+    const dist=Math.abs(x)+Math.abs(y);
+    off[i] = (2 - dist) * 0.06;
+  }
+  return off;
+}
+
+function predictProbs(mines){
+  const g = training.global;
+  const b = getBucket(mines);
+
+  const pg = bucketLocalP(g);
+  const pm = bucketLocalP(b);
+
+  const totalMine = b.mineTotal + b.gemTotal;
+  const totalGlobal = g.mineTotal + g.gemTotal;
+
+  const wM = Math.min(0.70, totalMine / 40);
+  const wG = 1 - wM;
+
+  const p0 = mines / TILE_COUNT;
+  const base = logit(p0);
+
+  const useCenter = $("centerPrior").checked;
+  const cOff = useCenter ? centerOffsets() : Array(25).fill(0);
+
+  const risk = parseInt($("riskSlider").value,10)/100;
+  const temp = 0.85 + (risk * 0.5);
+
+  const probs = Array(25).fill(0);
+  for(let i=0;i<25;i++){
+    const eG = logit(pg[i]);
+    const eM = logit(pm[i]);
+    let z = base + cOff[i] + (wG*eG) + (wM*eM);
+    z *= temp;
+    probs[i] = sigmoid(z);
+  }
+
+  $("blendNote").textContent = `${Math.round(wM*100)}% per-mine / ${Math.round(wG*100)}% global`;
+  $("blendHint").textContent = `per-mine samples=${totalMine}, global samples=${totalGlobal}`;
+  return probs;
+}
+
+function renderBoard(){
+  const board = $("board");
+  board.innerHTML = "";
+  for(let i=0;i<25;i++){
+    const d = document.createElement("div");
+    d.className = "tile";
+    d.id = "tile-"+i;
+    d.innerHTML = `<div class="heat"></div><div class="badge"></div><div class="mark"></div><div class="face"></div>`;
+    d.addEventListener("click", ()=>onTile(i));
+    board.appendChild(d);
+  }
+}
+
+function clearMarks(){
+  marksMine.clear();
+  marksGem.clear();
+  for(let i=0;i<25;i++){
+    const t = $("tile-"+i);
+    t.classList.remove("markMine","markGem");
+  }
+}
+
+function applyPrediction(probs, mines){
+  const view = $("predView").value;
+  const showPct = $("showPct").checked;
+
+  const ranked = Array.from({length:25},(_,i)=>({i,p:probs[i]})).sort((a,b)=>b.p-a.p);
+  const mineSet = new Set(ranked.slice(0, mines).map(x=>x.i));
+
+  for(let i=0;i<25;i++){
+    const tile = $("tile-"+i);
+    const heat = tile.querySelector(".heat");
+    const badge = tile.querySelector(".badge");
+    const face = tile.querySelector(".face");
+
+    heat.style.background = `radial-gradient(120px 120px at 50% 50%, ${heatColor(probs[i])} 0%, rgba(0,0,0,0) 65%)`;
+    badge.textContent = showPct ? `${Math.round(probs[i]*100)}%` : "";
+
+    tile.classList.remove("predMine","predGem");
+
+    if(view === "split"){
+      if(mineSet.has(i)){
+        tile.classList.add("predMine");
+        face.textContent = "💣";
+      }else{
+        tile.classList.add("predGem");
+        face.textContent = "💎";
+      }
+    }else{
+      face.textContent = "";
+    }
+  }
+
+  const safest = ranked.slice().sort((a,b)=>a.p-b.p).slice(0,3);
+  const suspects = ranked.slice(0,3);
+
+  $("safeNext").textContent = safest.map(x=>`${fmtTile(x.i)} (${Math.round((1-x.p)*100)}% safe)`).join(" • ");
+  $("mineSus").textContent = suspects.map(x=>`${fmtTile(x.i)} (${Math.round(x.p*100)}%)`).join(" • ");
+
+  const b = getBucket(mines);
+  $("trainCt").textContent = `${b.mineTotal + b.gemTotal} (mine=${b.mineTotal}, gem=${b.gemTotal}) + global=${training.global.mineTotal + training.global.gemTotal}`;
+
+  $("npcBig").textContent = "Nova: Prediction updated.";
+  $("npcSmall").textContent = "Label TRUE mines/gems to teach me. Per-mine learns for this mine count; global learns across mine counts.";
+}
+
+function updateMeta(){
+  const labels = (training.global.mineTotal + training.global.gemTotal);
+  $("metaPill").textContent = `round: ${round} • labels: ${labels}`;
+}
+
+function onTile(i){
+  const tool = $("markTool").value;
+  const tile = $("tile-"+i);
+
+  if(tool === "erase"){
+    marksMine.delete(i);
+    marksGem.delete(i);
+    tile.classList.remove("markMine","markGem");
+    return;
+  }
+  if(tool === "mine"){
+    if(marksMine.has(i)){
+      marksMine.delete(i);
+      tile.classList.remove("markMine");
+    }else{
+      marksMine.add(i);
+      tile.classList.add("markMine");
+      marksGem.delete(i);
+      tile.classList.remove("markGem");
+    }
+    return;
+  }
+  if(tool === "gem"){
+    if(marksGem.has(i)){
+      marksGem.delete(i);
+      tile.classList.remove("markGem");
+    }else{
+      marksGem.add(i);
+      tile.classList.add("markGem");
+      marksMine.delete(i);
+      tile.classList.remove("markMine");
+    }
+    return;
+  }
+}
+
+function newPrediction(){
+  const mines = parseInt($("mineSlider").value,10);
+  $("mineLabel").textContent = mines;
+  $("riskLabel").textContent = $("riskSlider").value;
+  const probs = predictProbs(mines);
+  applyPrediction(probs, mines);
+}
+
+function learnFromMarks(){
+  const mines = parseInt($("mineSlider").value,10);
+  const b = getBucket(mines);
+  let nMine=0, nGem=0;
+
+  for(const i of marksMine){
+    b.mine[i] += 1; b.mineTotal += 1;
+    training.global.mine[i] += 1; training.global.mineTotal += 1;
+    nMine++;
+  }
+  for(const i of marksGem){
+    b.gem[i] += 1; b.gemTotal += 1;
+    training.global.gem[i] += 1; training.global.gemTotal += 1;
+    nGem++;
+  }
+
+  if(nMine===0 && nGem===0){ toast("No labels yet — mark some mines/gems first."); return; }
+
+  saveTraining();
+  updateMeta();
+  toast(`Learned: ${nMine} mines, ${nGem} gems ✅`);
+  round += 1;
+  clearMarks();
+  newPrediction();
+}
+
+function exportTraining(){
+  $("ioBox").value = JSON.stringify(training, null, 2);
+  toast("Exported training JSON to the box.");
+}
+function importTraining(){
+  const raw = $("ioBox").value.trim();
+  if(!raw){ toast("Paste training JSON into the box first."); return; }
+  try{
+    const obj = JSON.parse(raw);
+    if(!obj.global || !obj.byMines) throw new Error("Invalid format");
+    training = obj;
+    saveTraining();
+    updateMeta();
+    toast("Imported training ✅");
+    newPrediction();
+  }catch(e){
+    toast("Import failed: JSON looks wrong.");
+  }
+}
+function resetAll(){
+  training = freshTraining();
+  saveTraining();
+  round = 1;
+  clearMarks();
+  updateMeta();
+  toast("Reset complete.");
+  newPrediction();
+}
+
+function advisorRun(){
+  const mines = Math.max(1, Math.min(24, parseInt($("advMines").value,10)||8));
+  const turns = Math.max(1, Math.min(24, parseInt($("advTurns").value,10)||5));
+  const mode = $("advPattern").value;
+
+  const probs = predictProbs(mines);
+  const available = Array.from({length:25},(_,i)=>({i,p:probs[i]})).sort((a,b)=>a.p-b.p);
+
+  if(mode === "sequence"){
+    const picks = available.slice(0, turns);
+    const lines = [];
+    const avg = picks.reduce((s,x)=>s+(1-x.p),0)/picks.length;
+    for(let t=0;t<picks.length;t++){
+      const p = picks[t];
+      lines.push(`${t+1}. ${fmtTile(p.i)}  |  mine=${Math.round(p.p*100)}%  safe=${Math.round((1-p.p)*100)}%`);
+    }
+    $("advOut").textContent = `Safest sequence for ${turns} turns (mines=${mines})
+
+${lines.join("\n")}
+
+Avg safe chance (rough): ${Math.round(avg*100)}%`;
+    return;
+  }
+
+  const neighbor = (i)=>{
+    const r=Math.floor(i/5), c=i%5, out=[];
+    if(r>0) out.push(i-5);
+    if(r<4) out.push(i+5);
+    if(c>0) out.push(i-1);
+    if(c<4) out.push(i+1);
+    return out;
+  };
+
+  let cluster = [available[0].i];
+  let inSet = new Set(cluster);
+
+  while(cluster.length < turns){
+    let best = null;
+    for(const i of cluster){
+      for(const nb of neighbor(i)){
+        if(inSet.has(nb)) continue;
+        const cand = {i:nb, p:probs[nb]};
+        if(!best || cand.p < best.p) best = cand;
+      }
+    }
+    if(!best){
+      for(const a of available){
+        if(!inSet.has(a.i)){ best = {i:a.i, p:a.p}; break; }
+      }
+    }
+    inSet.add(best.i);
+    cluster.push(best.i);
+  }
+
+  const sorted = cluster.slice().sort((a,b)=>probs[a]-probs[b]);
+  const lines = sorted.map((i,idx)=>`${idx+1}. ${fmtTile(i)}  |  mine=${Math.round(probs[i]*100)}%  safe=${Math.round((1-probs[i])*100)}%`);
+  const avg = sorted.reduce((s,i)=>s+(1-probs[i]),0)/sorted.length;
+  $("advOut").textContent = `Safest cluster (connected) for ${turns} tiles (mines=${mines})
+
+${lines.join("\n")}
+
+Avg safe chance (rough): ${Math.round(avg*100)}%`;
+}
+
+function setTab(which){
+  const trainOn = (which === "train");
+  $("tabTrain").classList.toggle("active", trainOn);
+  $("tabAdv").classList.toggle("active", !trainOn);
+  $("trainPanel").classList.toggle("hidden", !trainOn);
+  $("advPanel").classList.toggle("hidden", trainOn);
+  if(trainOn){
+    $("npcBig").textContent = "Nova: Training Mode.";
+    $("npcSmall").textContent = "New prediction → label TRUE mines/gems → submit & learn.";
+  }else{
+    $("npcBig").textContent = "Nova: Advisor Mode.";
+    $("npcSmall").textContent = "I’ll suggest the safest tiles/patterns for N turns using trained memory.";
+  }
+}
+
+training = loadTraining();
+renderBoard();
+updateMeta();
+newPrediction();
+
+$("mineSlider").addEventListener("input", ()=>{ $("mineLabel").textContent = $("mineSlider").value; newPrediction(); });
+$("riskSlider").addEventListener("input", ()=>{ $("riskLabel").textContent = $("riskSlider").value; newPrediction(); });
+$("predView").addEventListener("change", newPrediction);
+$("showPct").addEventListener("change", newPrediction);
+$("centerPrior").addEventListener("change", newPrediction);
+
+$("newPredBtn").addEventListener("click", ()=>{ round += 1; clearMarks(); updateMeta(); newPrediction(); toast("New prediction round."); });
+$("learnBtn").addEventListener("click", learnFromMarks);
+$("clearMarksBtn").addEventListener("click", ()=>{ clearMarks(); toast("Marks cleared."); });
+$("exportBtn").addEventListener("click", exportTraining);
+$("importBtn").addEventListener("click", importTraining);
+$("resetBtn").addEventListener("click", resetAll);
+
+$("advRun").addEventListener("click", advisorRun);
+$("advExport").addEventListener("click", exportTraining);
+$("advImport").addEventListener("click", importTraining);
+
+$("tabTrain").addEventListener("click", ()=>setTab("train"));
+$("tabAdv").addEventListener("click", ()=>setTab("adv"));
+</script>
+</body>
+</html>
