@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detective Mines 🕵️💣</title>
+  <style>
+    :root{
+      --bg:#0b1520; --panel:#0f2232; --panel2:#102a3f; --text:#eaf2ff; --muted:#a9b6c9;
+      --tile:#1f3446; --tile2:#28485f; --tileBorder:rgba(255,255,255,.08);
+      --good:#29d391; --warn:#f6c343; --bad:#ff4d4d; --accent:#6aa6ff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial; background:radial-gradient(1200px 600px at 50% -20%, #1a3d5b 0%, var(--bg) 55%); color:var(--text)}
+    .wrap{max-width:980px; margin:0 auto; padding:18px 14px 28px}
+    .top{display:flex; gap:12px; flex-wrap:wrap; align-items:stretch}
+    .card{background:linear-gradient(180deg,var(--panel),#0c1b28); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:10px}
+    h1{font-size:18px; margin:0; letter-spacing:.2px}
+    .sub{color:var(--muted); font-size:12px; margin-top:6px; line-height:1.35}
+
+    .controls{display:grid; grid-template-columns:1fr; gap:12px; min-width:min(440px,100%)}
+    .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+    .pill{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--muted)}
+    label{font-size:12px; color:var(--muted)}
+    input[type=range]{width:220px}
+    select{background:rgba(255,255,255,.06); color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 10px; outline:none}
+
+    .btns{display:flex; gap:10px; flex-wrap:wrap}
+    button{border:0; border-radius:12px; padding:10px 12px; font-weight:600; cursor:pointer; color:var(--text); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10)}
+    button:hover{background:rgba(255,255,255,.12)}
+    button.primary{background:linear-gradient(180deg,#2a6dff,#1a4fd6); border-color:rgba(255,255,255,.12)}
+    button.primary:hover{filter:brightness(1.06)}
+    button.danger{background:linear-gradient(180deg,#ff4d4d,#d93a3a); border-color:rgba(255,255,255,.12)}
+    button.ghost{background:transparent}
+    button:disabled{opacity:.45; cursor:not-allowed}
+
+    .hud{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-top:12px}
+    .stat{background:linear-gradient(180deg,var(--panel2),rgba(16,42,63,.35)); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:10px}
+    .k{font-size:11px; color:var(--muted)}
+    .v{font-size:18px; font-weight:800; margin-top:4px}
+    .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.35}
+
+    .main{display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:12px}
+    @media (max-width:880px){.main{grid-template-columns:1fr}}
+
+    .board{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; padding:12px}
+    .tile{aspect-ratio:1/1; border-radius:16px; background:linear-gradient(180deg,var(--tile),#152636);
+      border:1px solid var(--tileBorder); display:flex; align-items:center; justify-content:center;
+      position:relative; user-select:none; -webkit-tap-highlight-color:transparent;
+      transition:transform .08s ease, filter .12s ease, background .2s ease, box-shadow .2s ease;
+      font-size:22px; font-weight:900}
+    .tile:active{transform:scale(.98)}
+    .tile.revealed{background:linear-gradient(180deg,#143045,#0e2131)}
+    .tile.safe{box-shadow:0 0 0 2px rgba(41,211,145,.25) inset}
+    .tile.bomb{box-shadow:0 0 0 2px rgba(255,77,77,.22) inset}
+
+    .heat{position:absolute; inset:0; border-radius:16px; opacity:.0; transition:opacity .18s ease}
+    .tile.showHeat .heat{opacity:.85}
+
+    .badge{position:absolute; top:8px; left:8px; font-size:10px; color:rgba(255,255,255,.75); background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12); padding:3px 6px; border-radius:999px}
+
+    .rec{position:absolute; inset:-2px; border-radius:18px; border:2px solid rgba(106,166,255,.0); box-shadow:0 0 0 0 rgba(106,166,255,.0);
+      transition: all .18s ease}
+    .tile.recommended .rec{border-color:rgba(106,166,255,.85); box-shadow:0 0 18px rgba(106,166,255,.20)}
+    .tile.backup .rec{border-color:rgba(106,166,255,.35)}
+
+    .panel{padding:14px}
+    .npcLine{display:flex; gap:10px; align-items:flex-start}
+    .npcIcon{width:34px; height:34px; border-radius:12px; background:linear-gradient(180deg,#2b88ff,#1a4fd6); display:flex; align-items:center; justify-content:center; font-weight:900}
+    .npcText{flex:1}
+    .npcText .big{font-weight:800; font-size:14px; margin:0}
+    .npcText .small{margin:6px 0 0; color:var(--muted); font-size:12px; line-height:1.4}
+
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+    @media (max-width:520px){.grid2{grid-template-columns:1fr}}
+
+    .mini{background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:10px}
+    .mini .k{font-size:11px; color:var(--muted)}
+    .mini .v{font-size:13px; font-weight:800; margin-top:6px}
+
+    .history{max-height:240px; overflow:auto; margin-top:10px; padding-right:4px}
+    .hitem{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.10)}
+    .hitem:last-child{border-bottom:0}
+    .tag{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.82)}
+    .tag.win{background:rgba(41,211,145,.14); border-color:rgba(41,211,145,.24)}
+    .tag.lose{background:rgba(255,77,77,.12); border-color:rgba(255,77,77,.22)}
+
+    .toast{position:fixed; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(10,20,30,.92);
+      border:1px solid rgba(255,255,255,.12); color:var(--text); padding:10px 12px; border-radius:12px; display:none;
+      max-width:min(680px, calc(100% - 20px)); box-shadow:0 10px 30px rgba(0,0,0,.35); font-size:13px}
+    .toast.show{display:block; animation:pop .14s ease}
+    @keyframes pop{from{transform:translateX(-50%) translateY(6px); opacity:.0}to{transform:translateX(-50%) translateY(0); opacity:1}}
+
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="top">
+      <div class="card controls" style="flex:1">
+        <div class="title">
+          <div>
+            <h1>Detective Mines 🕵️💣</h1>
+            <div class="sub">Seeded “case pool” mines with a learning NPC that narrows down which case you’re in. Heatmap shows bomb-likelihood. Nova-style recommends the best move (or cashout) without looping.</div>
+          </div>
+          <div class="pill mono" id="seedPill">case: — • round: —</div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <label>Mines: <b id="mineLabel">8</b></label>
+          <input id="mineSlider" type="range" min="1" max="24" value="8" />
+          <label>Risk: <b id="riskLabel">55</b></label>
+          <input id="riskSlider" type="range" min="0" max="100" value="55" />
+        </div>
+
+        <div class="row">
+          <label>Case Mode</label>
+          <select id="modeSelect">
+            <option value="session">Session (more variety)</option>
+            <option value="daily">Daily Case (same all day)</option>
+          </select>
+          <label><input type="checkbox" id="heatToggle" checked /> Heatmap</label>
+          <label><input type="checkbox" id="autoSuggest" checked /> Auto-suggest</label>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="startBtn">Start Round</button>
+          <button class="danger" id="cashBtn" disabled>Cash Out</button>
+          <button class="ghost" id="revealAllBtn" disabled title="For debugging / showcase">Reveal Board</button>
+        </div>
+
+        <div class="hud">
+          <div class="stat"><div class="k">Multiplier</div><div class="v" id="mult">1.00x</div><div class="hint" id="multHint">Safe reveals increase this. Bomb = 0.</div></div>
+          <div class="stat"><div class="k">Pattern Locked</div><div class="v" id="lock">0.0%</div><div class="hint" id="lockHint">Fewer candidates = more certainty.</div></div>
+          <div class="stat"><div class="k">Candidates Left</div><div class="v" id="cand">256</div><div class="hint" id="candHint">NPC eliminates impossible cases after each safe reveal.</div></div>
+          <div class="stat"><div class="k">Best Next Move</div><div class="v" id="best">—</div><div class="hint" id="bestHint">Heatmap + Expected Value + anti-loop.</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="flex:1; min-width:min(420px,100%)">
+        <div class="npcLine">
+          <div class="npcIcon">N</div>
+          <div class="npcText">
+            <p class="big" id="npcBig">Nova: Ready when you are.</p>
+            <p class="small" id="npcSmall">Pick your mines, start the round, then tap tiles. I’ll narrow the case pool and light up the danger zones. 👀</p>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="mini">
+            <div class="k">Cashout Advice</div>
+            <div class="v" id="cashAdvice">—</div>
+            <div class="hint" id="cashHint">Compares EV of clicking best tile vs locking in now.</div>
+          </div>
+          <div class="mini">
+            <div class="k">Round Stats</div>
+            <div class="v" id="roundStats">—</div>
+            <div class="hint">Revealed: <span id="revealedCt">0</span> • Mines: <span id="minesCt">—</span></div>
+          </div>
+        </div>
+
+        <div class="mini" style="margin-top:10px">
+          <div class="k">History (local)</div>
+          <div class="history" id="history"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card board" id="board"></div>
+
+      <div class="card panel">
+        <div class="title" style="margin-bottom:8px">
+          <div>
+            <div style="font-weight:900">How the Detective Brain Works</div>
+            <div class="sub">Every round secretly picks a <b>case</b> from a limited seed pool. Each safe reveal eliminates cases that would have put a bomb there. The remaining cases vote on each tile’s bomb probability.</div>
+          </div>
+        </div>
+
+        <div class="mini">
+          <div class="k">Controls</div>
+          <div class="hint">
+            • <b>Mines</b> dial changes risk + multiplier growth.<br>
+            • <b>Risk</b> changes how aggressive cashout advice is (0 = super safe, 100 = chaotic).<br>
+            • <b>Heatmap</b> paints bomb-likelihood. Red = spicy.<br>
+            • <b>Auto-suggest</b> highlights best tile + backups.
+          </div>
+        </div>
+
+        <div class="mini" style="margin-top:10px">
+          <div class="k">Dev Notes</div>
+          <div class="hint">
+            • Offline-only. No server needed.<br>
+            • Uses 256 cases (fast). You can bump to 1024 later.<br>
+            • Anti-loop adds a penalty if the same tile is recommended repeatedly.<br>
+            • “Reveal Board” is for demo/debug.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /**************
+     * Core config
+     **************/
+    const NUM_CASES = 256;
+    const CASE_SEEDS = Array.from({length: NUM_CASES}, (_, i) => (i * 2654435761) >>> 0);
+
+    const TILE_COUNT = 25;
+    const GRID = 5;
+
+    // Small EV dampener to keep the “cashout vs continue” balance sane
+    const HOUSE_EDGE = 0.02;
+
+    const $ = (id) => document.getElementById(id);
+
+    /*********************
+     * Deterministic RNG
+     *********************/
+    function hash32(...values){
+      let h = 2166136261 >>> 0;
+      for(const v of values){
+        h ^= (v >>> 0);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+      return h >>> 0;
+    }
+
+    function seededShuffle(arr, seed){
+      const out = arr.slice();
+      let s = seed >>> 0;
+      for(let i = out.length - 1; i > 0; i--){
+        s = hash32(s, i);
+        const j = s % (i + 1);
+        const t = out[i]; out[i] = out[j]; out[j] = t;
+      }
+      return out;
+    }
+
+    function dayStamp(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${dd}`;
+    }
+
+    /*********************
+     * State
+     *********************/
+    let state = {
+      running:false,
+      bombCount:8,
+      risk:55,
+      roundIndex:1,
+      caseId:0,
+      bombs:new Set(),
+      revealed:new Set(),
+      safe:new Set(),
+      exploded:false,
+      multiplier:1,
+      candidates:[],
+      lastRecs:[], // anti-loop memory
+      history:[]
+    };
+
+    // Load history
+    try{
+      const saved = localStorage.getItem('detective_mines_history_v1');
+      if(saved) state.history = JSON.parse(saved);
+    }catch(e){}
+
+    function saveHistory(){
+      try{
+        localStorage.setItem('detective_mines_history_v1', JSON.stringify(state.history.slice(0,60)));
+      }catch(e){}
+    }
+
+    /*********************
+     * Board generation
+     *********************/
+    function generateBoard(caseId, bombCount, roundIndex){
+      const baseSeed = CASE_SEEDS[caseId];
+      const seed = hash32(baseSeed, bombCount, roundIndex);
+      const tiles = Array.from({length:TILE_COUNT}, (_,i)=>i);
+      const shuffled = seededShuffle(tiles, seed);
+      return new Set(shuffled.slice(0, bombCount));
+    }
+
+    function pickCaseId(mode, bombCount, roundIndex){
+      if(mode === 'daily'){
+        const ds = dayStamp();
+        let acc = 0;
+        for(let i=0;i<ds.length;i++) acc = hash32(acc, ds.charCodeAt(i));
+        return (hash32(acc, bombCount) % NUM_CASES) >>> 0;
+      }
+      // session variety
+      const r = (Math.random() * 1e9) >>> 0;
+      return (hash32(r, bombCount, roundIndex) % NUM_CASES) >>> 0;
+    }
+
+    /*********************
+     * NPC elimination
+     *********************/
+    function resetNPC(){
+      state.candidates = Array.from({length:NUM_CASES}, (_,i)=>i);
+      state.lastRecs = [];
+    }
+
+    function eliminateCases(){
+      const safeTiles = state.safe;
+      const bombCount = state.bombCount;
+      const roundIndex = state.roundIndex;
+
+      state.candidates = state.candidates.filter(caseId => {
+        const layout = generateBoard(caseId, bombCount, roundIndex);
+        for(const t of safeTiles){
+          if(layout.has(t)) return false;
+        }
+        return true;
+      });
+
+      if(state.candidates.length === 0){
+        resetNPC();
+      }
+    }
+
+    function heatmapProbs(){
+      const probs = Array(TILE_COUNT).fill(0);
+      const cand = state.candidates;
+      const bombCount = state.bombCount;
+      const roundIndex = state.roundIndex;
+
+      for(const caseId of cand){
+        const layout = generateBoard(caseId, bombCount, roundIndex);
+        for(let i=0;i<TILE_COUNT;i++){
+          if(layout.has(i)) probs[i] += 1;
+        }
+      }
+      const denom = cand.length || 1;
+      for(let i=0;i<TILE_COUNT;i++) probs[i] = probs[i] / denom;
+      return probs;
+    }
+
+    /*********************
+     * Multiplier curve
+     *********************/
+    function nextMultiplier(current, bombCount, revealedSafeCount){
+      const danger = bombCount / TILE_COUNT; // 0..1
+      const baseGain = 0.045 + 0.22 * danger;
+      const streakBonus = Math.min(0.08, revealedSafeCount * 0.006);
+      const gain = baseGain + streakBonus;
+      return Math.max(1.0, current * (1 + gain));
+    }
+
+    /*********************
+     * EV + move selection
+     *********************/
+    function formatTile(i){
+      const r = Math.floor(i / GRID) + 1;
+      const c = (i % GRID) + 1;
+      return `R${r}C${c}`;
+    }
+
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+    function recommendMoves(probs){
+      // For each unrevealed tile, compute EV of clicking it.
+      // EV(click) ≈ pSafe*(expected multiplier after safe) + (1-pSafe)*0  minus edge
+      // Compare EV(click) against EV(cashout)=current multiplier (handled separately)
+      const revealed = state.revealed;
+      const bombCount = state.bombCount;
+      const safeCount = state.safe.size;
+
+      const scored = [];
+      for(let i=0;i<TILE_COUNT;i++){
+        if(revealed.has(i)) continue;
+
+        const pBomb = probs[i];
+        const pSafe = 1 - pBomb;
+
+        // Multiplier if safe
+        const mNext = nextMultiplier(state.multiplier, bombCount, safeCount);
+
+        // baseline EV of click
+        let ev = (pSafe * mNext);
+
+        // slight “edge” to make cashout meaningful (game balancing)
+        ev *= (1 - HOUSE_EDGE);
+
+        // anti-loop: if we’ve recommended this tile recently, nudge down
+        const recentIndex = state.lastRecs.lastIndexOf(i);
+        if(recentIndex !== -1){
+          const age = (state.lastRecs.length - 1) - recentIndex; // 0 is most recent
+          const penalty = 0.08 * (1 / (age + 1)); // stronger if super recent
+          ev *= (1 - penalty);
+        }
+
+        // small bias to keep choices varied (and reduce “always top-left” vibes)
+        const centerBias = 1 - (Math.abs((i%5)-2) + Math.abs(Math.floor(i/5)-2)) * 0.015;
+        ev *= centerBias;
+
+        scored.push({i, ev, pBomb});
+      }
+
+      scored.sort((a,b)=>b.ev - a.ev);
+
+      const best = scored[0] || null;
+      const backups = scored.slice(1,3);
+
+      return {best, backups, scored};
+    }
+
+    function cashoutAdvice(best){
+      if(!state.running || state.exploded) return {text:"—", hint:""};
+
+      const risk = state.risk / 100; // 0 safe, 1 yolo
+
+      const cashEV = state.multiplier;
+
+      if(!best){
+        return {text:"Cash out", hint:"No safe candidates found."};
+      }
+
+      // Continue EV: EV of best click
+      const contEV = best.ev;
+
+      // Decision threshold: safer players cash sooner, risky players push longer
+      const margin = 0.02 + (0.10 * (1 - risk)); // safe => bigger margin needed to continue
+
+      if(cashEV >= contEV * (1 - margin)){
+        return {
+          text: `Cash out now ✅`,
+          hint: `Locking ${cashEV.toFixed(2)}x beats/equals clicking (${contEV.toFixed(2)}x EV).`
+        };
+      }
+
+      return {
+        text: `Keep going 🔥`,
+        hint: `Best click EV (${contEV.toFixed(2)}x) edges out cashout (${cashEV.toFixed(2)}x).`
+      };
+    }
+
+    /*********************
+     * UI rendering
+     *********************/
+    function toast(msg){
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
+    }
+
+    function renderHistory(){
+      const el = $("history");
+      const h = state.history.slice(0,20);
+      if(h.length === 0){
+        el.innerHTML = `<div class="hint">No rounds yet. Nova is bored. 😶</div>`;
+        return;
+      }
+      el.innerHTML = h.map(item=>{
+        const tag = item.result === "WIN"
+          ? `<span class="tag win">WIN</span>`
+          : `<span class="tag lose">LOSE</span>`;
+        return `
+          <div class="hitem">
+            <div>
+              <div style="font-weight:800">${tag} <span class="mono">m=${item.mines}</span> • <span class="mono">r=${item.round}</span></div>
+              <div class="hint">safe=${item.safe} • locked=${item.locked.toFixed(1)}% • mode=${item.mode}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:900">${item.mult.toFixed(2)}x</div>
+              <div class="hint">${item.when}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function heatColor(pBomb){
+      // green -> yellow -> red
+      const p = clamp01(pBomb);
+      const r = Math.round(40 + 215 * p);
+      const g = Math.round(200 - 170 * p);
+      const b = Math.round(80 - 60 * p);
+      return `rgba(${r},${g},${b},0.45)`;
+    }
+
+    function clearRecommendations(){
+      for(let i=0;i<TILE_COUNT;i++){
+        const tile = $("tile-"+i);
+        tile?.classList.remove("recommended","backup");
+      }
+    }
+
+    function applyHeatmap(probs){
+      const show = $("heatToggle").checked;
+      for(let i=0;i<TILE_COUNT;i++){
+        const tile = $("tile-"+i);
+        if(!tile) continue;
+        const heat = tile.querySelector(".heat");
+        if(!heat) continue;
+
+        const hidden = state.revealed.has(i);
+        const p = probs[i];
+
+        if(show && !hidden){
+          tile.classList.add("showHeat");
+          heat.style.background = `radial-gradient(120px 120px at 50% 50%, ${heatColor(p)} 0%, rgba(0,0,0,0) 65%)`;
+          tile.querySelector(".badge").textContent = `${Math.round(p*100)}%`;
+        }else{
+          tile.classList.remove("showHeat");
+          heat.style.background = "transparent";
+          tile.querySelector(".badge").textContent = "";
+        }
+      }
+    }
+
+    function renderBoard(){
+      const board = $("board");
+      board.innerHTML = "";
+      for(let i=0;i<TILE_COUNT;i++){
+        const div = document.createElement("div");
+        div.className = "tile";
+        div.id = "tile-"+i;
+        div.innerHTML = `<div class="heat"></div><div class="rec"></div><div class="badge"></div><div class="face"></div>`;
+        div.addEventListener("click", ()=>onTile(i));
+        board.appendChild(div);
+      }
+    }
+
+    function updateHUD(recs, probs){
+      $("mult").textContent = `${state.multiplier.toFixed(2)}x`;
+
+      const locked = 100 * (1 - (state.candidates.length / NUM_CASES));
+      $("lock").textContent = `${locked.toFixed(1)}%`;
+      $("cand").textContent = `${state.candidates.length}`;
+
+      $("revealedCt").textContent = state.revealed.size;
+      $("minesCt").textContent = state.bombCount;
+      $("roundStats").textContent = state.running ? `Round ${state.roundIndex} • ${state.exploded ? "ENDED" : "LIVE"}` : "—";
+
+      const pill = `case: ${state.running ? state.caseId : "—"} • round: ${state.running ? state.roundIndex : "—"}`;
+      $("seedPill").textContent = pill;
+
+      if(!state.running){
+        $("best").textContent = "—";
+        $("cashAdvice").textContent = "—";
+        $("cashHint").textContent = "Compares EV of clicking best tile vs locking in now.";
+        return;
+      }
+
+      if(recs?.best){
+        $("best").textContent = `${formatTile(recs.best.i)} (${Math.round((1-recs.best.pBomb)*100)}% safe)`;
+      }else{
+        $("best").textContent = "—";
+      }
+
+      const advice = cashoutAdvice(recs?.best);
+      $("cashAdvice").textContent = advice.text;
+      $("cashHint").textContent = advice.hint || $("cashHint").textContent;
+
+      // NPC narration
+      const risk = state.risk;
+      if(state.exploded){
+        $("npcBig").textContent = "Nova: Boom. Case closed. 💣";
+        $("npcSmall").textContent = "We learned something. Start a new round and I’ll lock the pattern faster.";
+      }else{
+        const topLine = recs?.best
+          ? `Nova: Tap ${formatTile(recs.best.i)}.`
+          : `Nova: I need one safe reveal to start locking the case.`;
+        const extra = recs?.best
+          ? `Candidates: ${state.candidates.length}. Heatmap updated. Your risk dial is ${risk} — I’m ${risk<40?"playing it safe":"feeling spicy"}.`
+          : `Set mines and start — then I’ll do detective things.`;
+        $("npcBig").textContent = topLine;
+        $("npcSmall").textContent = extra;
+      }
+
+      // heatmap
+      applyHeatmap(probs);
+
+      // recommendations
+      clearRecommendations();
+      if($("autoSuggest").checked && recs?.best){
+        const bestTile = $("tile-"+recs.best.i);
+        bestTile?.classList.add("recommended");
+        for(const b of recs.backups || []){
+          $("tile-"+b.i)?.classList.add("backup");
+        }
+      }
+    }
+
+    function setTileFace(i, emoji, cls){
+      const tile = $("tile-"+i);
+      if(!tile) return;
+      tile.classList.add("revealed");
+      if(cls) tile.classList.add(cls);
+      tile.querySelector(".face").textContent = emoji;
+      tile.querySelector(".badge").textContent = "";
+      tile.classList.remove("showHeat");
+    }
+
+    /*********************
+     * Game actions
+     *********************/
+    function startRound(){
+      state.running = true;
+      state.exploded = false;
+      state.revealed = new Set();
+      state.safe = new Set();
+      state.multiplier = 1;
+
+      state.bombCount = parseInt($("mineSlider").value, 10);
+      state.risk = parseInt($("riskSlider").value, 10);
+
+      const mode = $("modeSelect").value;
+      state.caseId = pickCaseId(mode, state.bombCount, state.roundIndex);
+      state.bombs = generateBoard(state.caseId, state.bombCount, state.roundIndex);
+
+      resetNPC();
+      renderBoard();
+
+      $("cashBtn").disabled = false;
+      $("revealAllBtn").disabled = false;
+
+      // first HUD update (uniform-ish heatmap until first safe reveal)
+      const probs = heatmapProbs();
+      const recs = recommendMoves(probs);
+      updateHUD(recs, probs);
+
+      toast("Round started. Nova is on the case. 🕵️");
+    }
+
+    function endRound(result){
+      const mode = $("modeSelect").value;
+      const locked = 100 * (1 - (state.candidates.length / NUM_CASES));
+
+      const now = new Date();
+      const when = now.toLocaleString([], {month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+
+      state.history.unshift({
+        result,
+        mines: state.bombCount,
+        round: state.roundIndex,
+        safe: state.safe.size,
+        mult: state.multiplier,
+        locked,
+        mode,
+        when
+      });
+      state.history = state.history.slice(0,60);
+      saveHistory();
+      renderHistory();
+
+      $("cashBtn").disabled = true;
+      $("revealAllBtn").disabled = true;
+
+      state.running = false;
+      // increment round index for next start
+      state.roundIndex += 1;
+
+      const probs = heatmapProbs();
+      updateHUD(null, probs);
+    }
+
+    function cashOut(){
+      if(!state.running || state.exploded) return;
+      toast(`Cashed out at ${state.multiplier.toFixed(2)}x ✅`);
+      $("npcBig").textContent = "Nova: Clean exit.";
+      $("npcSmall").textContent = "We take the multiplier and we walk away like professionals.";
+      endRound("WIN");
+    }
+
+    function revealAll(){
+      if(!state.running) return;
+      for(let i=0;i<TILE_COUNT;i++){
+        if(state.revealed.has(i)) continue;
+        if(state.bombs.has(i)) setTileFace(i,"💣","bomb");
+        else setTileFace(i,"💎","safe");
+      }
+      toast("Board revealed.");
+    }
+
+    function onTile(i){
+      if(!state.running || state.exploded) return;
+      if(state.revealed.has(i)) return;
+
+      state.revealed.add(i);
+
+      if(state.bombs.has(i)){
+        state.exploded = true;
+        setTileFace(i, "💣", "bomb");
+
+        // optionally show all bombs for clarity
+        for(let t=0;t<TILE_COUNT;t++){
+          if(!state.revealed.has(t) && state.bombs.has(t)){
+            setTileFace(t, "💣", "bomb");
+            state.revealed.add(t);
+          }
+        }
+
+        toast("Bomb. Round lost. 💥");
+        $("npcBig").textContent = "Nova: That tile was cursed.";
+        $("npcSmall").textContent = "We’ll lock the pattern faster next time.";
+
+        endRound("LOSE");
+        return;
+      }
+
+      // safe
+      state.safe.add(i);
+      setTileFace(i, "💎", "safe");
+
+      // update multiplier
+      state.multiplier = nextMultiplier(state.multiplier, state.bombCount, state.safe.size);
+      // eliminate cases based on safe reveal
+      eliminateCases();
+
+      // compute heatmap + recommendations
+      const probs = heatmapProbs();
+      const recs = recommendMoves(probs);
+
+      // update anti-loop memory with best suggestion
+      if(recs?.best){
+        state.lastRecs.push(recs.best.i);
+        if(state.lastRecs.length > 8) state.lastRecs.shift();
+      }
+
+      updateHUD(recs, probs);
+
+      // subtle “Nova” toast if pattern is locking
+      const locked = 100 * (1 - (state.candidates.length / NUM_CASES));
+      if(locked >= 85 && locked < 90) toast("Pattern is snapping into place…");
+      if(locked >= 95) toast("Pattern locked. Nova sees everything. 👁️");
+    }
+
+    /*********************
+     * Wire up controls
+     *********************/
+    $("mineSlider").addEventListener("input", e=>{
+      const v = parseInt(e.target.value, 10);
+      $("mineLabel").textContent = v;
+    });
+    $("riskSlider").addEventListener("input", e=>{
+      const v = parseInt(e.target.value, 10);
+      $("riskLabel").textContent = v;
+      state.risk = v;
+      // refresh advice if running
+      if(state.running){
+        const probs = heatmapProbs();
+        const recs = recommendMoves(probs);
+        updateHUD(recs, probs);
+      }
+    });
+
+    $("startBtn").addEventListener("click", startRound);
+    $("cashBtn").addEventListener("click", cashOut);
+    $("revealAllBtn").addEventListener("click", revealAll);
+
+    // init UI
+    renderBoard();
+    renderHistory();
+    $("mineLabel").textContent = $("mineSlider").value;
+    $("riskLabel").textContent = $("riskSlider").value;
+    $("lock").textContent = "0.0%";
+    $("cand").textContent = String(NUM_CASES);
+    $("npcBig").textContent = "Nova: Ready when you are.";
+    $("npcSmall").textContent = "Start a round and I’ll narrow the case pool as you reveal safe tiles.";
+  </script>
+</body>
+</html>
