@@ -1,559 +1,2749 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Detective Mines V1.5 🕵️💣</title>
-<style>
-:root{--bg:#0b1520;--panel:#0f2232;--panel2:#102a3f;--text:#eaf2ff;--muted:#a9b6c9;--tile:#1f3446;--tile2:#152636;--border:rgba(255,255,255,.08);--good:#29d391;--bad:#ff4d4d;--accent:#6aa6ff;}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;background:radial-gradient(1200px 600px at 50% -20%, #1a3d5b 0%, var(--bg) 55%);color:var(--text)}
-.wrap{max-width:1100px;margin:0 auto;padding:18px 14px 30px}
-.grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:12px
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Detective Mines — Cyber Casino Edition</title>
 
-@media (min-width: 900px){
-  .grid{
-    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  }
-}
-@media (max-width:980px){.grid{grid-template-columns:1fr}}
-.card{background:linear-gradient(180deg,var(--panel),#0c1b28);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-h1{margin:0;font-size:18px;letter-spacing:.2px}
-.sub{color:var(--muted);font-size:12px;line-height:1.35;margin-top:6px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.tab{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);cursor:pointer;font-weight:900;font-size:12px}
-.tab.active{background:linear-gradient(180deg,#2a6dff,#1a4fd6)}
-label{font-size:12px;color:var(--muted)}
-input[type=range]{width:220px}
-input[type=number]{width:96px}
-select,input[type=number],textarea{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;outline:none}
-textarea{width:100%;min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;line-height:1.35}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-button{border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer;color:var(--text);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10)}
-button:hover{background:rgba(255,255,255,.12)}
-button.primary{background:linear-gradient(180deg,#2a6dff,#1a4fd6)}
-button.good{background:linear-gradient(180deg,#29d391,#1aa96f)}
-button.danger{background:linear-gradient(180deg,#ff4d4d,#d93a3a)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
-@media (max-width:980px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.stat{background:linear-gradient(180deg,var(--panel2),rgba(16,42,63,.35));border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px}
-.k{font-size:11px;color:var(--muted)}
-.v{font-size:15px;font-weight:900;margin-top:4px}
-.hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:12px}
-.tile{aspect-ratio:1/1;border-radius:16px;background:linear-gradient(180deg,var(--tile),var(--tile2));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer;transition:transform .08s ease, box-shadow .18s ease}
-.tile:active{transform:scale(.985)}
-.heat{position:absolute;inset:0;border-radius:16px;opacity:.92}
-.badge{position:absolute;top:8px;left:8px;font-size:10px;color:rgba(255,255,255,.80);background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);padding:3px 6px;border-radius:999px}
-.mark{position:absolute;inset:-2px;border-radius:18px;border:2px dashed rgba(106,166,255,0);transition:all .14s ease}
-.tile.markMine .mark{border-color:rgba(255,77,77,.90)}
-.tile.markGem .mark{border-color:rgba(41,211,145,.90)}
-.face{position:relative;font-size:22px;font-weight:900}
-.tile.predMine{box-shadow:0 0 0 2px rgba(255,77,77,.20) inset}
-.tile.predGem{box-shadow:0 0 0 2px rgba(41,211,145,.16) inset}
-.npc{display:flex;gap:10px;align-items:flex-start}
-.npcIcon{width:34px;height:34px;border-radius:12px;background:linear-gradient(180deg,#2b88ff,#1a4fd6);display:flex;align-items:center;justify-content:center;font-weight:900}
-.npc .big{font-weight:900;font-size:14px;margin:0}
-.npc .small{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(10,20,30,.92);border:1px solid rgba(255,255,255,.12);color:var(--text);padding:10px 12px;border-radius:12px;display:none;max-width:min(860px,calc(100% - 20px));box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13px}
-.toast.show{display:block}
-.hidden{display:none!important}
-</style>
+  <!--
+    Detective Mines — Cyber Casino Edition (single-file, offline-capable)
+
+    Executive summary:
+    - 5x5 deterministic mines generator: xfnv1a string hash + mulberry32 PRNG + Fisher-Yates shuffle
+    - Global seed stays constant across an epoch (daily/weekly/manual); seed does NOT change every round
+    - Mode B: "Generate Prediction" forecasts NEXT round (roundIndex+1), stores true mask internally (never shown),
+      renders probability heatmap + top-K predicted mines + safest left→right path (Dijkstra with cost=risk)
+    - Teaching phase: user marks TRUE mines for next round; Confirm activates at exactly N mines; confirm validates vs true mask,
+      warns on mismatch, updates learning from user input, increments roundIndex, resets prediction
+    - Learning model: per-tile mine counts + Laplace smoothing + last-100 sequence memory (recency, repetition, adjacency, row/col correlation)
+    - Recommend Seed: 7 crypto.getRandomValues candidates, 200-round simulation each, selects lowest variance; modal table + Apply/Copy/Close
+    - Auto-suggest seed if biased: after X rounds (default 20) compute epoch generator variance → uniformity score;
+      if below threshold (default 70) show non-blocking toast recommending new seed
+    - Safe Planning Mode: aggregates true boards for next X rounds (1–500), reports top 3 safest tiles, worst tile,
+      per-tile mine rate grid, and optional path stability (aggregate only; no per-round spoilers)
+    - Import/Export: JSON state snapshot (seed, epoch metadata, roundIndex, mine counts, recent masks, UI settings), schema validation on import
+
+    Notes:
+    - Uniformity score mapping is a heuristic (variance → exp decay) intended for UI, not a formal statistical test.
+    - Mulberry32 is deterministic and compact for reproducible game logic; it is not a cryptographic PRNG.
+  -->
+
+  <style>
+    :root{
+      --bg0:#040614;
+      --bg1:#070a1e;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.16);
+      --text:rgba(235,245,255,.92);
+      --muted:rgba(235,245,255,.62);
+      --muted2:rgba(235,245,255,.46);
+
+      --neonCyan:#6cf6ff;
+      --neonViolet:#b66cff;
+      --neonGreen:#6cff9a;
+      --danger:#ff4d7d;
+      --warn:#ffd36c;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.48);
+      --blur: 16px;
+      --radius: 18px;
+
+      --tileSize: 64px;
+      --gap: 12px;
+
+      --anim: 220ms;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, rgba(108,246,255,.14), transparent 55%),
+        radial-gradient(1000px 800px at 85% 18%, rgba(182,108,255,.14), transparent 55%),
+        radial-gradient(900px 750px at 60% 90%, rgba(108,255,154,.10), transparent 58%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:18px 14px 28px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    .brand h1{
+      font-size:18px;
+      margin:0;
+      letter-spacing:.2px;
+      font-weight:820;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+      backdrop-filter: blur(var(--blur));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      font-size:12px;
+      color:var(--muted);
+      max-width:100%;
+    }
+    .pill b{color:var(--text); font-weight:820}
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--neonCyan);
+      box-shadow: 0 0 10px rgba(108,246,255,.55), 0 0 18px rgba(108,246,255,.25);
+      flex:0 0 auto;
+    }
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:2px 7px;
+      border-radius:9px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.25);
+      color: var(--muted);
+      display:inline-block;
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      backdrop-filter: blur(var(--blur));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .panelHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:12px 12px;
+      border-bottom:1px solid var(--stroke);
+      background:linear-gradient(90deg, rgba(108,246,255,.08), rgba(182,108,255,.06), rgba(108,255,154,.05));
+      flex-wrap:wrap;
+    }
+    .panelTitle{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .panelTitle .t{
+      font-size:13px;
+      letter-spacing:.2px;
+      font-weight:820;
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .panelTitle .s{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .panelBody{padding:12px}
+
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:720;
+      letter-spacing:.1px;
+      cursor:pointer;
+      transition: transform var(--anim) ease, border-color var(--anim) ease, background var(--anim) ease, box-shadow var(--anim) ease, opacity var(--anim) ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(108,246,255,.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(108,246,255,.10), 0 0 18px rgba(108,246,255,.10);
+    }
+    .btn:active{transform: translateY(0)}
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .btn.primary{
+      border-color: rgba(108,246,255,.40);
+      background: linear-gradient(180deg, rgba(108,246,255,.12), rgba(255,255,255,.05));
+    }
+    .btn.good{
+      border-color: rgba(108,255,154,.35);
+      background: linear-gradient(180deg, rgba(108,255,154,.12), rgba(255,255,255,.05));
+    }
+    .btn.danger{
+      border-color: rgba(255,77,125,.35);
+      background: linear-gradient(180deg, rgba(255,77,125,.12), rgba(255,255,255,.05));
+    }
+    .btn.ghost{
+      background:rgba(255,255,255,.03);
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      width:100%;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+    }
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      color:var(--text);
+      background:rgba(5,7,18,.58);
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      padding:10px 10px;
+      font-size:13px;
+      outline:none;
+      transition: border-color var(--anim) ease, box-shadow var(--anim) ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(108,246,255,.45);
+      box-shadow: 0 0 0 3px rgba(108,246,255,.10), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    textarea{min-height:84px; resize:vertical}
+
+    .mini{
+      font-size:12px;
+      color:var(--muted2);
+      line-height:1.35;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:560px){
+      .split{grid-template-columns:1fr}
+    }
+
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 10px 0;
+    }
+
+    .toggles{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:560px){
+      .toggles{grid-template-columns:1fr}
+    }
+
+    .toggle{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.03);
+      cursor:pointer;
+      user-select:none;
+      transition: border-color var(--anim) ease, background var(--anim) ease, transform var(--anim) ease;
+    }
+    .toggle:hover{
+      border-color: rgba(182,108,255,.35);
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.04);
+    }
+    .toggle input{display:none}
+    .switch{
+      width:44px;height:26px;border-radius:999px;
+      border:1px solid var(--stroke2);
+      background: rgba(255,255,255,.06);
+      position:relative;
+      flex:0 0 auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      transition: border-color var(--anim) ease, background var(--anim) ease, box-shadow var(--anim) ease;
+    }
+    .knob{
+      width:20px;height:20px;border-radius:50%;
+      background: rgba(235,245,255,.88);
+      position:absolute;top:2px;left:2px;
+      transition: transform var(--anim) ease, background var(--anim) ease;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    .toggle[data-on="true"] .switch{
+      border-color: rgba(108,246,255,.45);
+      background: rgba(108,246,255,.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 16px rgba(108,246,255,.10);
+    }
+    .toggle[data-on="true"] .knob{
+      transform: translateX(18px);
+      background: rgba(255,255,255,.94);
+    }
+    .toggle .txt{
+      display:flex;flex-direction:column;gap:2px;min-width:0;
+    }
+    .toggle .txt .a{font-size:13px;font-weight:780;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .toggle .txt .b{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .boardWrap{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .boardTop{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .statChip{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      max-width:100%;
+    }
+    .statChip b{color:var(--text);font-weight:820}
+    .statChip .mono{font-family:var(--mono); font-size:11px; color: rgba(235,245,255,.82);}
+
+    .board{
+      display:grid;
+      grid-template-columns: repeat(5, var(--tileSize));
+      gap: var(--gap);
+      justify-content:center;
+      padding: 14px 10px 16px;
+    }
+    @media (max-width: 420px){
+      :root{ --tileSize: 58px; --gap: 10px; }
+    }
+    @media (max-width: 360px){
+      :root{ --tileSize: 54px; --gap: 9px; }
+    }
+
+    .tile{
+      width:var(--tileSize);
+      height:var(--tileSize);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 12px 24px rgba(0,0,0,.30);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      cursor:pointer;
+      transition: transform var(--anim) ease, box-shadow var(--anim) ease, border-color var(--anim) ease, filter var(--anim) ease;
+      user-select:none;
+      overflow:hidden;
+      outline:none;
+      touch-action: manipulation;
+    }
+    .tile:hover{
+      transform: translateY(-2px);
+      border-color: rgba(108,246,255,.32);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(108,246,255,.08), 0 16px 34px rgba(0,0,0,.36);
+    }
+    .tile:active{transform: translateY(-1px)}
+    .tile:focus-visible{
+      border-color: rgba(255,211,108,.55);
+      box-shadow: 0 0 0 3px rgba(255,211,108,.14), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .tile .center{
+      font-size:13px;
+      font-weight:860;
+      letter-spacing:.2px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.45);
+      opacity:0;
+      transform: translateY(3px);
+      transition: opacity var(--anim) ease, transform var(--anim) ease;
+      color: rgba(235,245,255,.90);
+    }
+    .tile.showCenter .center{opacity:1;transform: translateY(0)}
+
+    .tile .tag{
+      position:absolute;
+      top:8px;left:8px;
+      font-size:11px;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color: rgba(235,245,255,.78);
+      opacity:0;
+      transform: translateY(-4px);
+      transition: opacity var(--anim) ease, transform var(--anim) ease;
+      pointer-events:none;
+      max-width: calc(100% - 16px);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .tile .tag.right{
+      left:auto;right:8px;
+    }
+    .tile.showTagL .tag.left{opacity:1;transform: translateY(0)}
+    .tile.showTagR .tag.right{opacity:1;transform: translateY(0)}
+
+    .tile.predMine{
+      border-color: rgba(255,77,125,.34);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(255,77,125,.10), 0 18px 40px rgba(0,0,0,.35);
+    }
+    .tile.path{
+      border-color: rgba(108,255,154,.34);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(108,255,154,.10), 0 18px 40px rgba(0,0,0,.35);
+    }
+    .tile.marked{
+      border-color: rgba(255,211,108,.38);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(255,211,108,.12), 0 18px 40px rgba(0,0,0,.35);
+    }
+    .tile.marked::after{
+      content:"";
+      position:absolute;inset:0;
+      background:
+        radial-gradient(180px 140px at 30% 20%, rgba(255,211,108,.18), transparent 55%),
+        radial-gradient(160px 140px at 70% 80%, rgba(255,211,108,.12), transparent 55%);
+      pointer-events:none;
+    }
+
+    .report{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      overflow:auto;
+    }
+    .report b{color:var(--text)}
+    .report .mono{font-family:var(--mono); font-size:12px; color: rgba(235,245,255,.86)}
+    .report .small{font-size:12px;color:var(--muted2)}
+    .report .good{color: rgba(108,255,154,.92)}
+    .report .danger{color: rgba(255,77,125,.92)}
+    .report .warn{color: rgba(255,211,108,.92)}
+
+    .toastWrap{
+      position:fixed;
+      left:0; right:0;
+      bottom:18px;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+      z-index:9999;
+      padding:0 12px;
+    }
+    .toast{
+      pointer-events:auto;
+      max-width: 860px;
+      width:100%;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,26,.72);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55), 0 0 0 3px rgba(108,246,255,.08);
+      padding: 10px 12px;
+      display:none;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .toast.show{display:flex}
+    .toast .icon{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(108,246,255,.18), rgba(255,255,255,.06));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 0 20px rgba(108,246,255,.10);
+      flex:0 0 auto;
+    }
+    .toast .msg{
+      display:flex;flex-direction:column;gap:2px;min-width:0;
+    }
+    .toast .msg .a{font-weight:860;font-size:13px;color:var(--text)}
+    .toast .msg .b{font-size:12px;color:var(--muted);line-height:1.35}
+    .toast .actions{
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .modalBackdrop{
+      position:fixed;inset:0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9998;
+      padding: 18px 12px;
+    }
+    .modalBackdrop.show{display:flex}
+    .modal{
+      max-width: 840px;
+      width:100%;
+      border-radius: 20px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,26,.84);
+      box-shadow: 0 22px 80px rgba(0,0,0,.60), 0 0 0 3px rgba(182,108,255,.10);
+      overflow:hidden;
+    }
+    .modal .mh{
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(90deg, rgba(182,108,255,.10), rgba(108,246,255,.06));
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      flex-wrap:wrap;
+    }
+    .modal .mh .t{
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .modal .mb{
+      padding:12px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .modal .mf{
+      padding:12px;
+      border-top:1px solid rgba(255,255,255,.12);
+      display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;
+    }
+
+    .seedBox{
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      font-family: var(--mono);
+      font-size:12px;
+      word-break:break-all;
+      color: rgba(235,245,255,.88);
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:12px;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:top;
+      text-align:left;
+    }
+    th{
+      color: rgba(235,245,255,.80);
+      font-weight:900;
+      background: rgba(255,255,255,.04);
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tr:last-child td{border-bottom:none}
+    .bestRow td{
+      background: radial-gradient(900px 240px at 20% 50%, rgba(108,255,154,.10), rgba(255,255,255,.02));
+    }
+    .monoCell{
+      font-family: var(--mono);
+      word-break:break-all;
+      color: rgba(235,245,255,.88);
+    }
+
+    .miniGrid{
+      display:grid;
+      grid-template-columns: repeat(5, 12px);
+      gap:4px;
+      margin-top:10px;
+      justify-content:flex-start;
+      align-items:center;
+    }
+    .miniCell{
+      width:12px;height:12px;border-radius:4px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{transition:none !important; animation:none !important}
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div>
-        <h1>Detective Mines V1.5 🕵️💣</h1>
-        <div class="sub">AI lab mode. The board is always revealed as <b>Nova’s prediction</b>. You label multiple TRUE 💣 mines / 💎 gems, then Nova updates her model. Models are separate per mine-count, but also learn cross-mine patterns through a global model.</div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Detective Mines — Cyber Casino Edition</h1>
+        <div class="sub">
+          <span class="pill"><span class="dot"></span> Provably-fair deterministic generator • epoch seed • no external deps</span>
+          <span class="pill">Mode B: predict <b>next</b> round, then teach</span>
+        </div>
       </div>
-      <div class="pill mono" id="metaPill">round: 1 • labels: 0</div>
+      <div class="pill" id="statusPill">Status: <b id="statusText">Idle</b></div>
     </div>
-    <div class="tabs">
-      <div class="tab active" id="tabTrain">Training Mode</div>
-      <div class="tab" id="tabAdv">Advisor Mode</div>
-    </div>
-  </div>
 
-  <div class="grid" style="margin-top:12px">
-    <div class="card">
-      <div id="trainPanel">
-        <div class="row">
-          <label>Mines: <b id="mineLabel">8</b></label>
-          <input id="mineSlider" type="range" min="1" max="24" value="8"/>
-          <label>Risk: <b id="riskLabel">55</b></label>
-          <input id="riskSlider" type="range" min="0" max="100" value="55"/>
+    <div class="grid">
+      <!-- LEFT: Board + report -->
+      <div class="panel">
+        <div class="panelHead">
+          <div class="panelTitle">
+            <div class="t">Mines Grid</div>
+            <div class="s" id="boardSubtitle">Tap “Generate Prediction” to enter teaching mode for the next round.</div>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="btnPredict">Generate Prediction</button>
+            <button class="btn good" id="btnConfirm" disabled>Confirm Teaching</button>
+          </div>
         </div>
-        <div class="row" style="margin-top:6px">
-          <label>Prediction View</label>
-          <select id="predView">
-            <option value="split">Split (top M = mines)</option>
-            <option value="heat">Heatmap only</option>
-          </select>
-          <label><input type="checkbox" id="showPct" checked/> show %</label>
-          <label><input type="checkbox" id="centerPrior" checked/> center prior</label>
-        </div>
-        <div class="row" style="margin-top:6px">
-          <label>Marking Tool</label>
-          <select id="markTool">
-            <option value="mine">Mark TRUE Mine 💣</option>
-            <option value="gem">Mark TRUE Gem 💎</option>
-            <option value="erase">Eraser</option>
-          </select>
-          <div class="pill">Tap tiles to toggle marks</div>
-        </div>
-        <div class="btns">
-          <button class="primary" id="newPredBtn">New Prediction Round</button>
-          <button class="good" id="learnBtn">Submit Labels & Learn</button>
-          <button id="clearMarksBtn">Clear Marks</button>
-          <button id="exportBtn">Export Training</button>
-          <button id="importBtn">Import Training</button>
-          <button class="danger" id="resetBtn">Reset All</button>
-        </div>
-      </div>
 
-      <div id="advPanel" class="hidden">
-        <div class="row">
-          <label>Mines</label><input id="advMines" type="number" min="1" max="24" value="8"/>
-          <label>Turns ahead</label><input id="advTurns" type="number" min="1" max="24" value="5"/>
-          <label>Pattern</label>
-          <select id="advPattern">
-            <option value="sequence">Safest sequence</option>
-            <option value="cluster">Safest cluster</option>
-          </select>
-        </div>
-        <div class="btns">
-          <button class="primary" id="advRun">Run Advisor</button>
-          <button id="advExport">Export Training</button>
-          <button id="advImport">Import Training</button>
-        </div>
-        <div class="sub" style="margin-top:8px">Advisor uses <b>trained data only</b> (global + per-mine) to suggest safe picks for the next N turns.</div>
-        <div class="stat" style="margin-top:10px">
-          <div class="k">Advisor Output</div>
-          <div class="v mono" id="advOut" style="font-size:12px;white-space:pre-wrap">—</div>
-        </div>
-      </div>
+        <div class="panelBody">
+          <div class="boardWrap">
+            <div class="boardTop">
+              <div class="row">
+                <span class="statChip">Round Index: <b id="roundIndexText">0</b></span>
+                <span class="statChip">Next Round: <b id="nextRoundText">1</b></span>
+                <span class="statChip">Mines: <b id="mineCountText">3</b></span>
+                <span class="statChip">Marked: <b id="markedText">0</b>/<b id="markedNeedText">3</b></span>
+              </div>
+              <div class="row">
+                <span class="statChip">Epoch: <b id="epochTypeChip">Manual</b></span>
+                <span class="statChip">Epoch Rounds: <b id="epochRoundsText">0</b></span>
+                <span class="statChip">Uniformity: <b id="uniformText">—</b></span>
+                <span class="statChip">Variance: <b id="varText">—</b></span>
+              </div>
+            </div>
 
-      <div class="hud">
-        <div class="stat"><div class="k">Safest Next Tile</div><div class="v" id="safeNext">—</div><div class="hint">Lowest predicted mine %.</div></div>
-        <div class="stat"><div class="k">Top Mine Suspects</div><div class="v" id="mineSus">—</div><div class="hint">Highest predicted mine %.</div></div>
-        <div class="stat"><div class="k">Training Samples</div><div class="v" id="trainCt">0</div><div class="hint">Per-mine + global labels.</div></div>
-        <div class="stat"><div class="k">Blend</div><div class="v" id="blendNote">—</div><div class="hint" id="blendHint">Per-mine grows as you label more.</div></div>
-      </div>
+            <div class="board" id="board" aria-label="5 by 5 mines board"></div>
 
-      <div class="stat" style="margin-top:10px">
-        <div class="npc">
-          <div class="npcIcon">N</div>
-          <div>
-            <p class="big" id="npcBig">Nova: Ready.</p>
-            <p class="small" id="npcSmall">Hit “New Prediction Round”, label TRUE mines/gems, then submit & learn.</p>
+            <div class="report" id="report">
+              <b>Detective Report</b><br/>
+              <span class="small">
+                No prediction yet. Hit <span class="kbd">Generate Prediction</span> to map risk for the next round,
+                mark top-K predicted mines, and trace the safest left → right path.
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="stat" style="margin-top:10px">
-        <div class="k">Import / Export box</div>
-        <div class="hint">Export puts JSON here. Import reads JSON from here.</div>
-        <textarea id="ioBox" spellcheck="false" placeholder="Training JSON will appear here…"></textarea>
+      <!-- RIGHT: Controls -->
+      <div class="panel">
+        <div class="panelHead">
+          <div class="panelTitle">
+            <div class="t">Control Deck</div>
+            <div class="s">Seed, epoch, toggles, planning, import/export</div>
+          </div>
+          <div class="pill" id="epochMetaPill">
+            <span class="mono" id="epochMetaText"></span>
+          </div>
+        </div>
+
+        <div class="panelBody">
+          <div class="panel" style="box-shadow:none">
+            <div class="panelHead">
+              <div class="panelTitle">
+                <div class="t">Seed Input</div>
+                <div class="s">Global seed remains constant during the epoch</div>
+              </div>
+            </div>
+            <div class="panelBody">
+              <div class="field">
+                <label for="seedInput">Global Seed (pasteable)</label>
+                <textarea id="seedInput" spellcheck="false" placeholder="Paste or type your global seed…"></textarea>
+                <div class="row">
+                  <button class="btn primary" id="btnApplySeed">Apply Seed</button>
+                  <button class="btn ghost" id="btnPasteSeed">Paste from Clipboard</button>
+                  <button class="btn" id="btnRecommendSeed">Recommend Seed</button>
+                </div>
+                <div class="mini">Apply Seed stores it in localStorage, resets epoch metadata, runs fairness evaluation, and refreshes the UI.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="split" style="margin-top:10px">
+            <div class="field">
+              <label for="mineCount">Configured Mines</label>
+              <select id="mineCount">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="epochType">Epoch Type</label>
+              <select id="epochType">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="manual" selected>Manual</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn danger" id="btnNewEpoch">Start New Epoch</button>
+            <button class="btn ghost" id="btnResetView">Reset View</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="toggles" id="toggleGrid">
+            <div class="toggle" data-key="heatmap" data-on="true">
+              <input type="checkbox" id="tgHeatmap" checked />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Heatmap Mode</div><div class="b">Risk tint on tiles</div></div>
+            </div>
+
+            <div class="toggle" data-key="percentage" data-on="false">
+              <input type="checkbox" id="tgPercent" />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Percentage Mode</div><div class="b">Show % on tiles</div></div>
+            </div>
+
+            <div class="toggle" data-key="predmines" data-on="true">
+              <input type="checkbox" id="tgPredMines" checked />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Show Predicted Mines</div><div class="b">Top K risk tiles</div></div>
+            </div>
+
+            <div class="toggle" data-key="bestpath" data-on="true">
+              <input type="checkbox" id="tgBestPath" checked />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Show Best Path</div><div class="b">Safest left → right</div></div>
+            </div>
+
+            <div class="toggle" data-key="autosuggest" data-on="false">
+              <input type="checkbox" id="tgAutoSuggest" />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Auto-suggest new seed if biased</div><div class="b">After X rounds, threshold</div></div>
+            </div>
+
+            <div class="toggle" data-key="safeplan" data-on="false">
+              <input type="checkbox" id="tgSafePlan" />
+              <div class="switch"><div class="knob"></div></div>
+              <div class="txt"><div class="a">Safe Planning Mode</div><div class="b">Aggregate next X rounds</div></div>
+            </div>
+          </div>
+
+          <div class="split" style="margin-top:10px">
+            <div class="field">
+              <label for="biasRounds">Bias check after X rounds</label>
+              <input type="number" id="biasRounds" min="5" max="5000" value="20" />
+            </div>
+            <div class="field">
+              <label for="biasThreshold">Uniformity threshold (%)</label>
+              <input type="number" id="biasThreshold" min="1" max="99" value="70" />
+            </div>
+          </div>
+
+          <div class="split" style="margin-top:10px">
+            <div class="field">
+              <label for="wFreq">Weight: Frequency Model</label>
+              <input type="number" id="wFreq" min="0" max="1" step="0.05" value="0.60" />
+            </div>
+            <div class="field">
+              <label for="wSeq">Weight: Sequence Model</label>
+              <input type="number" id="wSeq" min="0" max="1" step="0.05" value="0.40" />
+            </div>
+          </div>
+
+          <div class="panel" style="box-shadow:none; margin-top:10px">
+            <div class="panelHead">
+              <div class="panelTitle">
+                <div class="t">Safe Planning Mode</div>
+                <div class="s">Aggregate only — no spoilers per-round</div>
+              </div>
+            </div>
+            <div class="panelBody">
+              <div class="split">
+                <div class="field">
+                  <label for="planX">Next X rounds (1–500)</label>
+                  <input type="number" id="planX" min="1" max="500" value="25" />
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnRunPlan">Run Safe Plan</button>
+                </div>
+              </div>
+              <div class="mini" id="planSummary">Turn on “Safe Planning Mode” toggle, then run the scan. Results appear in the Detective Report.</div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="panel" style="box-shadow:none">
+            <div class="panelHead">
+              <div class="panelTitle">
+                <div class="t">Import / Export</div>
+                <div class="s">JSON snapshot of seed + epoch + learning + UI</div>
+              </div>
+            </div>
+            <div class="panelBody">
+              <div class="row">
+                <button class="btn" id="btnExport">Export JSON</button>
+                <button class="btn ghost" id="btnCopyExport" disabled>Copy Export</button>
+              </div>
+
+              <div class="field" style="margin-top:8px">
+                <label for="ioBox">JSON box</label>
+                <textarea id="ioBox" spellcheck="false" placeholder="Export appears here. Paste JSON here to import."></textarea>
+              </div>
+
+              <div class="row">
+                <button class="btn primary" id="btnImport">Import JSON</button>
+                <button class="btn ghost" id="btnClearIO">Clear</button>
+              </div>
+
+              <div class="mini">Imports validate schema. If it looks wrong, it won’t load.</div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="k">Prediction Board (always revealed)</div>
-      <div class="sub" style="margin-top:6px">Heat overlay = predicted mine likelihood. Split view tags top M tiles as predicted 💣 mines.</div>
-      <div class="board" id="board"></div>
+    <div class="toastWrap">
+      <div class="toast" id="toast">
+        <div class="icon" id="toastIcon">⚡</div>
+        <div class="msg">
+          <div class="a" id="toastA">Toast</div>
+          <div class="b" id="toastB">Message</div>
+        </div>
+        <div class="actions" id="toastActions"></div>
+      </div>
+    </div>
+
+    <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+      <div class="modal">
+        <div class="mh">
+          <div class="t" id="modalTitle">Modal</div>
+          <button class="btn ghost" id="modalClose">Close</button>
+        </div>
+        <div class="mb" id="modalBody"></div>
+        <div class="mf" id="modalFooter"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <script>
+    (() => {
+      "use strict";
 
-<script>
-const TILE_COUNT = 25, GRID = 5;
-const TRAIN_KEY = "detective_mines_training_v15";
-const $ = (id)=>document.getElementById(id);
+      // -----------------------------------------
+      // Constants
+      // -----------------------------------------
+      const APP_VERSION = "detective-mines-cyber-casino-v1";
+      const STORAGE_KEY = "DetectiveMines.CyberCasino.v1";
+      const GRID = 5;
+      const N = GRID * GRID; // 25
+      const MAX_RECENT = 100;
 
-function freshBucket(){ return {mine:Array(25).fill(0), gem:Array(25).fill(0), mineTotal:0, gemTotal:0}; }
-function freshTraining(){ return {global:freshBucket(), byMines:{}}; }
+      // -----------------------------------------
+      // Utility
+      // -----------------------------------------
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+      const isInt = (x) => Number.isFinite(x) && Math.floor(x) === x;
+      const nowISO = () => new Date().toISOString();
 
-let training = null;
-let round = 1;
-
-let marksMine = new Set();
-let marksGem = new Set();
-
-function getBucket(m){
-  const k = String(m);
-  if(!training.byMines[k]) training.byMines[k] = freshBucket();
-  return training.byMines[k];
-}
-
-function loadTraining(){
-  try{
-    const raw = localStorage.getItem(TRAIN_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return freshTraining();
-}
-function saveTraining(){
-  try{ localStorage.setItem(TRAIN_KEY, JSON.stringify(training)); }catch(e){}
-}
-
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-function toast(msg){
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
-}
-function fmtTile(i){ const r=Math.floor(i/GRID)+1, c=(i%GRID)+1; return `R${r}C${c}`; }
-function heatColor(p){
-  const x = clamp01(p);
-  const r = Math.round(40 + 215*x);
-  const g = Math.round(200 - 170*x);
-  const b = Math.round(80 - 60*x);
-  return `rgba(${r},${g},${b},0.45)`;
-}
-function logit(p){ p=clamp01(p); p=Math.min(0.999,Math.max(0.001,p)); return Math.log(p/(1-p)); }
-function sigmoid(z){ return 1/(1+Math.exp(-z)); }
-
-function bucketLocalP(bucket){
-  const out = Array(25).fill(0.5);
-  for(let i=0;i<25;i++){
-    const mine=bucket.mine[i], gem=bucket.gem[i];
-    out[i] = (mine + 1) / (mine + gem + 2);
-  }
-  return out;
-}
-function centerOffsets(){
-  const off = Array(25).fill(0);
-  for(let i=0;i<25;i++){
-    const x=(i%5)-2, y=Math.floor(i/5)-2;
-    const dist=Math.abs(x)+Math.abs(y);
-    off[i] = (2 - dist) * 0.06;
-  }
-  return off;
-}
-
-function predictProbs(mines){
-  const g = training.global;
-  const b = getBucket(mines);
-
-  const pg = bucketLocalP(g);
-  const pm = bucketLocalP(b);
-
-  const totalMine = b.mineTotal + b.gemTotal;
-  const totalGlobal = g.mineTotal + g.gemTotal;
-
-  const wM = Math.min(0.70, totalMine / 40);
-  const wG = 1 - wM;
-
-  const p0 = mines / TILE_COUNT;
-  const base = logit(p0);
-
-  const useCenter = $("centerPrior").checked;
-  const cOff = useCenter ? centerOffsets() : Array(25).fill(0);
-
-  const risk = parseInt($("riskSlider").value,10)/100;
-  const temp = 0.85 + (risk * 0.5);
-
-  const probs = Array(25).fill(0);
-  for(let i=0;i<25;i++){
-    const eG = logit(pg[i]);
-    const eM = logit(pm[i]);
-    let z = base + cOff[i] + (wG*eG) + (wM*eM);
-    z *= temp;
-    probs[i] = sigmoid(z);
-  }
-
-  $("blendNote").textContent = `${Math.round(wM*100)}% per-mine / ${Math.round(wG*100)}% global`;
-  $("blendHint").textContent = `per-mine samples=${totalMine}, global samples=${totalGlobal}`;
-  return probs;
-}
-
-function renderBoard(){
-  const board = $("board");
-  board.innerHTML = "";
-  for(let i=0;i<25;i++){
-    const d = document.createElement("div");
-    d.className = "tile";
-    d.id = "tile-"+i;
-    d.innerHTML = `<div class="heat"></div><div class="badge"></div><div class="mark"></div><div class="face"></div>`;
-    d.addEventListener("click", ()=>onTile(i));
-    board.appendChild(d);
-  }
-}
-
-function clearMarks(){
-  marksMine.clear();
-  marksGem.clear();
-  for(let i=0;i<25;i++){
-    const t = $("tile-"+i);
-    t.classList.remove("markMine","markGem");
-  }
-}
-
-function applyPrediction(probs, mines){
-  const view = $("predView").value;
-  const showPct = $("showPct").checked;
-
-  const ranked = Array.from({length:25},(_,i)=>({i,p:probs[i]})).sort((a,b)=>b.p-a.p);
-  const mineSet = new Set(ranked.slice(0, mines).map(x=>x.i));
-
-  for(let i=0;i<25;i++){
-    const tile = $("tile-"+i);
-    const heat = tile.querySelector(".heat");
-    const badge = tile.querySelector(".badge");
-    const face = tile.querySelector(".face");
-
-    heat.style.background = `radial-gradient(120px 120px at 50% 50%, ${heatColor(probs[i])} 0%, rgba(0,0,0,0) 65%)`;
-    badge.textContent = showPct ? `${Math.round(probs[i]*100)}%` : "";
-
-    tile.classList.remove("predMine","predGem");
-
-    if(view === "split"){
-      if(mineSet.has(i)){
-        tile.classList.add("predMine");
-        face.textContent = "💣";
-      }else{
-        tile.classList.add("predGem");
-        face.textContent = "💎";
+      function fmtDateTime(iso){
+        try{
+          const d = new Date(iso);
+          return d.toLocaleString(undefined, {year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+        }catch(_){
+          return iso;
+        }
       }
-    }else{
-      face.textContent = "";
-    }
-  }
 
-  const safest = ranked.slice().sort((a,b)=>a.p-b.p).slice(0,3);
-  const suspects = ranked.slice(0,3);
-
-  $("safeNext").textContent = safest.map(x=>`${fmtTile(x.i)} (${Math.round((1-x.p)*100)}% safe)`).join(" • ");
-  $("mineSus").textContent = suspects.map(x=>`${fmtTile(x.i)} (${Math.round(x.p*100)}%)`).join(" • ");
-
-  const b = getBucket(mines);
-  $("trainCt").textContent = `${b.mineTotal + b.gemTotal} (mine=${b.mineTotal}, gem=${b.gemTotal}) + global=${training.global.mineTotal + training.global.gemTotal}`;
-
-  $("npcBig").textContent = "Nova: Prediction updated.";
-  $("npcSmall").textContent = "Label TRUE mines/gems to teach me. Per-mine learns for this mine count; global learns across mine counts.";
-}
-
-function updateMeta(){
-  const labels = (training.global.mineTotal + training.global.gemTotal);
-  $("metaPill").textContent = `round: ${round} • labels: ${labels}`;
-}
-
-function onTile(i){
-  const tool = $("markTool").value;
-  const tile = $("tile-"+i);
-
-  if(tool === "erase"){
-    marksMine.delete(i);
-    marksGem.delete(i);
-    tile.classList.remove("markMine","markGem");
-    return;
-  }
-  if(tool === "mine"){
-    if(marksMine.has(i)){
-      marksMine.delete(i);
-      tile.classList.remove("markMine");
-    }else{
-      marksMine.add(i);
-      tile.classList.add("markMine");
-      marksGem.delete(i);
-      tile.classList.remove("markGem");
-    }
-    return;
-  }
-  if(tool === "gem"){
-    if(marksGem.has(i)){
-      marksGem.delete(i);
-      tile.classList.remove("markGem");
-    }else{
-      marksGem.add(i);
-      tile.classList.add("markGem");
-      marksMine.delete(i);
-      tile.classList.remove("markMine");
-    }
-    return;
-  }
-}
-
-function newPrediction(){
-  const mines = parseInt($("mineSlider").value,10);
-  $("mineLabel").textContent = mines;
-  $("riskLabel").textContent = $("riskSlider").value;
-  const probs = predictProbs(mines);
-  applyPrediction(probs, mines);
-}
-
-function learnFromMarks(){
-  const mines = parseInt($("mineSlider").value,10);
-  const b = getBucket(mines);
-  let nMine=0, nGem=0;
-
-  for(const i of marksMine){
-    b.mine[i] += 1; b.mineTotal += 1;
-    training.global.mine[i] += 1; training.global.mineTotal += 1;
-    nMine++;
-  }
-  for(const i of marksGem){
-    b.gem[i] += 1; b.gemTotal += 1;
-    training.global.gem[i] += 1; training.global.gemTotal += 1;
-    nGem++;
-  }
-
-  if(nMine===0 && nGem===0){ toast("No labels yet — mark some mines/gems first."); return; }
-
-  saveTraining();
-  updateMeta();
-  toast(`Learned: ${nMine} mines, ${nGem} gems ✅`);
-  round += 1;
-  clearMarks();
-  newPrediction();
-}
-
-function exportTraining(){
-  $("ioBox").value = JSON.stringify(training, null, 2);
-  toast("Exported training JSON to the box.");
-}
-function importTraining(){
-  const raw = $("ioBox").value.trim();
-  if(!raw){ toast("Paste training JSON into the box first."); return; }
-  try{
-    const obj = JSON.parse(raw);
-    if(!obj.global || !obj.byMines) throw new Error("Invalid format");
-    training = obj;
-    saveTraining();
-    updateMeta();
-    toast("Imported training ✅");
-    newPrediction();
-  }catch(e){
-    toast("Import failed: JSON looks wrong.");
-  }
-}
-function resetAll(){
-  training = freshTraining();
-  saveTraining();
-  round = 1;
-  clearMarks();
-  updateMeta();
-  toast("Reset complete.");
-  newPrediction();
-}
-
-function advisorRun(){
-  const mines = Math.max(1, Math.min(24, parseInt($("advMines").value,10)||8));
-  const turns = Math.max(1, Math.min(24, parseInt($("advTurns").value,10)||5));
-  const mode = $("advPattern").value;
-
-  const probs = predictProbs(mines);
-  const available = Array.from({length:25},(_,i)=>({i,p:probs[i]})).sort((a,b)=>a.p-b.p);
-
-  if(mode === "sequence"){
-    const picks = available.slice(0, turns);
-    const lines = [];
-    const avg = picks.reduce((s,x)=>s+(1-x.p),0)/picks.length;
-    for(let t=0;t<picks.length;t++){
-      const p = picks[t];
-      lines.push(`${t+1}. ${fmtTile(p.i)}  |  mine=${Math.round(p.p*100)}%  safe=${Math.round((1-p.p)*100)}%`);
-    }
-    $("advOut").textContent = `Safest sequence for ${turns} turns (mines=${mines})
-
-${lines.join("\n")}
-
-Avg safe chance (rough): ${Math.round(avg*100)}%`;
-    return;
-  }
-
-  const neighbor = (i)=>{
-    const r=Math.floor(i/5), c=i%5, out=[];
-    if(r>0) out.push(i-5);
-    if(r<4) out.push(i+5);
-    if(c>0) out.push(i-1);
-    if(c<4) out.push(i+1);
-    return out;
-  };
-
-  let cluster = [available[0].i];
-  let inSet = new Set(cluster);
-
-  while(cluster.length < turns){
-    let best = null;
-    for(const i of cluster){
-      for(const nb of neighbor(i)){
-        if(inSet.has(nb)) continue;
-        const cand = {i:nb, p:probs[nb]};
-        if(!best || cand.p < best.p) best = cand;
+      function coord(i){
+        const r = Math.floor(i / GRID), c = i % GRID;
+        return `(${r+1},${c+1})`;
       }
-    }
-    if(!best){
-      for(const a of available){
-        if(!inSet.has(a.i)){ best = {i:a.i, p:a.p}; break; }
+
+      function bitHas(mask, idx){ return ((mask >>> idx) & 1) === 1; }
+      function bitSet(mask, idx){ return (mask | (1 << idx)) >>> 0; }
+      function bitClear(mask, idx){ return (mask & ~(1 << idx)) >>> 0; }
+
+      function popcount32(x){
+        x >>>= 0;
+        x -= (x >>> 1) & 0x55555555;
+        x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+        return (((x + (x >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24;
       }
-    }
-    inSet.add(best.i);
-    cluster.push(best.i);
-  }
 
-  const sorted = cluster.slice().sort((a,b)=>probs[a]-probs[b]);
-  const lines = sorted.map((i,idx)=>`${idx+1}. ${fmtTile(i)}  |  mine=${Math.round(probs[i]*100)}%  safe=${Math.round((1-probs[i])*100)}%`);
-  const avg = sorted.reduce((s,i)=>s+(1-probs[i]),0)/sorted.length;
-  $("advOut").textContent = `Safest cluster (connected) for ${turns} tiles (mines=${mines})
+      function normalizeWeights(wA, wB){
+        wA = Number.isFinite(wA) ? wA : 0.6;
+        wB = Number.isFinite(wB) ? wB : 0.4;
+        wA = Math.max(0, wA);
+        wB = Math.max(0, wB);
+        const s = wA + wB;
+        if(s <= 1e-9) return [0.6,0.4];
+        return [wA/s, wB/s];
+      }
 
-${lines.join("\n")}
+      // -----------------------------------------
+      // Hash + PRNG + Shuffle
+      // -----------------------------------------
+      function xfnv1a(str){
+        // FNV-1a-ish seeding helper returning a 32-bit hash generator.
+        // Commonly used to seed fast PRNGs in JS demos/games.
+        let h = 2166136261 >>> 0;
+        for(let i=0;i<str.length;i++){
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return function(){
+          // extra avalanche mixing
+          h += h << 13; h ^= h >>> 7;
+          h += h << 3;  h ^= h >>> 17;
+          h += h << 5;
+          return h >>> 0;
+        };
+      }
 
-Avg safe chance (rough): ${Math.round(avg*100)}%`;
-}
+      function mulberry32(a){
+        return function(){
+          let t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
 
-function setTab(which){
-  const trainOn = (which === "train");
-  $("tabTrain").classList.toggle("active", trainOn);
-  $("tabAdv").classList.toggle("active", !trainOn);
-  $("trainPanel").classList.toggle("hidden", !trainOn);
-  $("advPanel").classList.toggle("hidden", trainOn);
-  if(trainOn){
-    $("npcBig").textContent = "Nova: Training Mode.";
-    $("npcSmall").textContent = "New prediction → label TRUE mines/gems → submit & learn.";
-  }else{
-    $("npcBig").textContent = "Nova: Advisor Mode.";
-    $("npcSmall").textContent = "I’ll suggest the safest tiles/patterns for N turns using trained memory.";
-  }
-}
+      function fisherYatesShuffle(arr, rand){
+        for(let i = arr.length - 1; i > 0; i--){
+          const j = Math.floor(rand() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
 
-training = loadTraining();
-renderBoard();
-updateMeta();
-newPrediction();
+      function generateMinesMask(globalSeed, roundIndex, mineCount){
+        const key = `${globalSeed}:${roundIndex}:${mineCount}`;
+        const seedFn = xfnv1a(key);
+        const a = seedFn(); // 32-bit seed
+        const rand = mulberry32(a);
 
-$("mineSlider").addEventListener("input", ()=>{ $("mineLabel").textContent = $("mineSlider").value; newPrediction(); });
-$("riskSlider").addEventListener("input", ()=>{ $("riskLabel").textContent = $("riskSlider").value; newPrediction(); });
-$("predView").addEventListener("change", newPrediction);
-$("showPct").addEventListener("change", newPrediction);
-$("centerPrior").addEventListener("change", newPrediction);
+        const indices = Array.from({length:N}, (_,i)=>i);
+        fisherYatesShuffle(indices, rand);
 
-$("newPredBtn").addEventListener("click", ()=>{ round += 1; clearMarks(); updateMeta(); newPrediction(); toast("New prediction round."); });
-$("learnBtn").addEventListener("click", learnFromMarks);
-$("clearMarksBtn").addEventListener("click", ()=>{ clearMarks(); toast("Marks cleared."); });
-$("exportBtn").addEventListener("click", exportTraining);
-$("importBtn").addEventListener("click", importTraining);
-$("resetBtn").addEventListener("click", resetAll);
+        let mask = 0 >>> 0;
+        for(let i=0;i<mineCount;i++){
+          mask = bitSet(mask, indices[i]);
+        }
+        return mask >>> 0;
+      }
 
-$("advRun").addEventListener("click", advisorRun);
-$("advExport").addEventListener("click", exportTraining);
-$("advImport").addEventListener("click", importTraining);
+      // -----------------------------------------
+      // Neighbors (4-way)
+      // -----------------------------------------
+      const NEIGH = (() => {
+        const out = [];
+        for(let i=0;i<N;i++){
+          const r = Math.floor(i/GRID), c = i%GRID;
+          const ns = [];
+          if(r>0) ns.push((r-1)*GRID + c);
+          if(r<GRID-1) ns.push((r+1)*GRID + c);
+          if(c>0) ns.push(r*GRID + (c-1));
+          if(c<GRID-1) ns.push(r*GRID + (c+1));
+          out.push(ns);
+        }
+        return out;
+      })();
 
-$("tabTrain").addEventListener("click", ()=>setTab("train"));
-$("tabAdv").addEventListener("click", ()=>setTab("adv"));
-</script>
+      // -----------------------------------------
+      // Fairness evaluation helpers
+      // -----------------------------------------
+      function computeVarianceFromCounts(counts, rounds, mineCount){
+        const expected = mineCount / N;
+        let varSum = 0;
+        for(let i=0;i<N;i++){
+          const freq = rounds > 0 ? (counts[i] / rounds) : expected;
+          const d = freq - expected;
+          varSum += d*d;
+        }
+        return varSum / N;
+      }
+
+      function uniformityScoreFromVariance(variance, mineCount){
+        // Heuristic mapping: higher variance => lower score via exp decay.
+        // Scale factor "maxish" chosen to make typical random-ish seeds score high.
+        const p = mineCount / N;
+        const maxish = Math.max(1e-6, p*(1-p)*0.25);
+        const x = clamp(variance / maxish, 0, 2.5);
+        return clamp(100 * Math.exp(-1.35 * x), 0, 100);
+      }
+
+      function simulateSeedUniformity(seed, mineCount, rounds){
+        const counts = new Array(N).fill(0);
+        for(let r=1;r<=rounds;r++){
+          const mask = generateMinesMask(seed, r, mineCount);
+          for(let i=0;i<N;i++){
+            if(bitHas(mask,i)) counts[i]++;
+          }
+        }
+        const variance = computeVarianceFromCounts(counts, rounds, mineCount);
+        const score = uniformityScoreFromVariance(variance, mineCount);
+        return {counts, rounds, variance, score};
+      }
+
+      function computeEpochGeneratorUniformity(seed, mineCount, roundsPlayed){
+        const counts = new Array(N).fill(0);
+        for(let r=1;r<=roundsPlayed;r++){
+          const mask = generateMinesMask(seed, r, mineCount);
+          for(let i=0;i<N;i++){
+            if(bitHas(mask,i)) counts[i]++;
+          }
+        }
+        const variance = computeVarianceFromCounts(counts, roundsPlayed, mineCount);
+        const score = uniformityScoreFromVariance(variance, mineCount);
+        return {counts, rounds: roundsPlayed, variance, score};
+      }
+
+      // -----------------------------------------
+      // Learning model
+      // -----------------------------------------
+      function buildFrequencyModel(mineCounts, roundsSeenEpoch){
+        // Laplace smoothing as requested: (count+1)/(rounds+2)
+        const out = new Array(N).fill(0);
+        const denom = (roundsSeenEpoch + 2);
+        for(let i=0;i<N;i++){
+          out[i] = (mineCounts[i] + 1) / denom;
+        }
+        return out;
+      }
+
+      function buildSequenceModel(recentMasks, mineCount){
+        // Signals:
+        // - Recency-weighted mine rate per tile
+        // - Adjacency clustering boost
+        // - Repetition pattern bump
+        // - Mild row/col correlation bias from recent activity
+        const n = recentMasks.length;
+        const baseline = mineCount / N;
+        if(n === 0) return new Array(N).fill(baseline);
+
+        const lambda = 0.92;
+        let wSum = 0;
+        const rec = new Array(N).fill(0);
+
+        for(let k=0;k<n;k++){
+          const mask = recentMasks[n-1-k] >>> 0;
+          const w = Math.pow(lambda, k);
+          wSum += w;
+          for(let i=0;i<N;i++){
+            if(bitHas(mask,i)) rec[i] += w;
+          }
+        }
+        for(let i=0;i<N;i++){
+          rec[i] = rec[i] / (wSum || 1);
+        }
+
+        // adjacency: neighbor-of-mine boost
+        let adjWSum = 0;
+        const adj = new Array(N).fill(0);
+        for(let k=0;k<n;k++){
+          const mask = recentMasks[n-1-k] >>> 0;
+          const w = Math.pow(lambda, k);
+          adjWSum += w;
+          for(let i=0;i<N;i++){
+            if(!bitHas(mask,i)) continue;
+            for(const nb of NEIGH[i]){
+              adj[nb] += w;
+            }
+          }
+        }
+        for(let i=0;i<N;i++){
+          // scaled down by approximate mines per round
+          adj[i] = adj[i] / ((adjWSum || 1) * Math.max(1, mineCount));
+        }
+
+        // repetition: if last exactly repeats earlier masks, bump those mine tiles slightly
+        const repBoost = new Array(N).fill(0);
+        if(n >= 5){
+          const last = recentMasks[n-1] >>> 0;
+          let repeats = 0;
+          for(let k=0;k<n-1;k++){
+            if((recentMasks[k]>>>0) === last) repeats++;
+          }
+          if(repeats > 0){
+            const bump = clamp(0.06 * repeats, 0, 0.20);
+            for(let i=0;i<N;i++){
+              if(bitHas(last,i)) repBoost[i] = bump;
+            }
+          }
+        }
+
+        // row/col correlation (recency-weighted)
+        const rowW = new Array(GRID).fill(0);
+        const colW = new Array(GRID).fill(0);
+        for(let i=0;i<N;i++){
+          const r = Math.floor(i/GRID), c = i%GRID;
+          rowW[r] += rec[i];
+          colW[c] += rec[i];
+        }
+        // normalize to ~[0..1] range by dividing by GRID
+        for(let r=0;r<GRID;r++) rowW[r] /= GRID;
+        for(let c=0;c<GRID;c++) colW[c] /= GRID;
+
+        const out = new Array(N).fill(0);
+        for(let i=0;i<N;i++){
+          const r = Math.floor(i/GRID), c = i%GRID;
+          const pos = 0.5 * rowW[r] + 0.5 * colW[c];
+          out[i] = clamp(
+            0.72*rec[i] +
+            0.18*clamp(adj[i],0,1) +
+            0.06*clamp(pos,0,1) +
+            repBoost[i],
+            0, 1
+          );
+          // keep from becoming unrealistically extreme when data is sparse
+          out[i] = clamp(0.85*out[i] + 0.15*baseline, 0, 1);
+        }
+        return out;
+      }
+
+      function computeFinalRisk(state){
+        const freq = buildFrequencyModel(state.learning.mineCounts, state.learning.roundsSeenEpoch);
+        const seq  = buildSequenceModel(state.learning.recentMasks, state.mineCount);
+        const [wF, wS] = normalizeWeights(state.ui.wFreq, state.ui.wSeq);
+
+        const out = new Array(N).fill(0);
+        for(let i=0;i<N;i++){
+          out[i] = clamp(wF*freq[i] + wS*seq[i], 0, 1);
+        }
+        return {risk: out, freq, seq, wF, wS};
+      }
+
+      // -----------------------------------------
+      // Dijkstra best path (left→right), cost per tile
+      // -----------------------------------------
+      function dijkstraBestPath(cost){
+        const INF = 1e18;
+        const dist = new Array(N).fill(INF);
+        const prev = new Array(N).fill(-1);
+        const used = new Array(N).fill(false);
+
+        const left = [];
+        for(let r=0;r<GRID;r++) left.push(r*GRID);
+
+        for(const i of left){
+          dist[i] = (cost[i] + 1e-6);
+        }
+
+        for(let iter=0; iter<N; iter++){
+          let u = -1, best = INF;
+          for(let i=0;i<N;i++){
+            if(used[i]) continue;
+            if(dist[i] < best){
+              best = dist[i];
+              u = i;
+            }
+          }
+          if(u === -1) break;
+          used[u] = true;
+
+          for(const v of NEIGH[u]){
+            if(used[v]) continue;
+            const nd = dist[u] + (cost[v] + 1e-6);
+            if(nd < dist[v]){
+              dist[v] = nd;
+              prev[v] = u;
+            }
+          }
+        }
+
+        const right = [];
+        for(let r=0;r<GRID;r++) right.push(r*GRID + (GRID-1));
+        let end = right[0], bestEnd = dist[end];
+        for(const i of right){
+          if(dist[i] < bestEnd){
+            bestEnd = dist[i];
+            end = i;
+          }
+        }
+
+        const path = [];
+        let cur = end;
+        while(cur !== -1){
+          path.push(cur);
+          cur = prev[cur];
+        }
+        path.reverse();
+        return {path, cost: bestEnd};
+      }
+
+      // -----------------------------------------
+      // UI color helpers
+      // -----------------------------------------
+      function riskColor(r){
+        // Green->Pink hue sweep; rendered via HSL for vivid neon-like gradients.
+        const hue = (140 + (350-140) * clamp(r,0,1)) % 360;
+        return `hsl(${hue} 86% 48%)`;
+      }
+
+      function riskBgStyle(r){
+        const c = riskColor(r);
+        const a1 = 0.07 + 0.22*clamp(r,0,1);
+        const a2 = 0.05 + 0.16*clamp(r,0,1);
+        return `
+          background:
+            radial-gradient(180px 140px at 30% 20%, rgba(255,255,255,.06), transparent 60%),
+            radial-gradient(220px 180px at 70% 85%, rgba(255,255,255,.05), transparent 60%),
+            radial-gradient(220px 160px at 40% 35%, ${c.replace("hsl","hsla").replace(")",`,${a1})`)}, transparent 60%),
+            linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+        `;
+      }
+
+      // -----------------------------------------
+      // Toast + Modal
+      // -----------------------------------------
+      const el = {
+        statusText: document.getElementById("statusText"),
+        boardSubtitle: document.getElementById("boardSubtitle"),
+
+        btnPredict: document.getElementById("btnPredict"),
+        btnConfirm: document.getElementById("btnConfirm"),
+
+        roundIndexText: document.getElementById("roundIndexText"),
+        nextRoundText: document.getElementById("nextRoundText"),
+        mineCountText: document.getElementById("mineCountText"),
+        markedText: document.getElementById("markedText"),
+        markedNeedText: document.getElementById("markedNeedText"),
+        epochTypeChip: document.getElementById("epochTypeChip"),
+        epochRoundsText: document.getElementById("epochRoundsText"),
+        uniformText: document.getElementById("uniformText"),
+        varText: document.getElementById("varText"),
+
+        epochMetaText: document.getElementById("epochMetaText"),
+
+        board: document.getElementById("board"),
+        report: document.getElementById("report"),
+
+        seedInput: document.getElementById("seedInput"),
+        btnApplySeed: document.getElementById("btnApplySeed"),
+        btnPasteSeed: document.getElementById("btnPasteSeed"),
+        btnRecommendSeed: document.getElementById("btnRecommendSeed"),
+
+        mineCount: document.getElementById("mineCount"),
+        epochType: document.getElementById("epochType"),
+        btnNewEpoch: document.getElementById("btnNewEpoch"),
+        btnResetView: document.getElementById("btnResetView"),
+
+        tgHeatmap: document.getElementById("tgHeatmap"),
+        tgPercent: document.getElementById("tgPercent"),
+        tgPredMines: document.getElementById("tgPredMines"),
+        tgBestPath: document.getElementById("tgBestPath"),
+        tgAutoSuggest: document.getElementById("tgAutoSuggest"),
+        tgSafePlan: document.getElementById("tgSafePlan"),
+
+        biasRounds: document.getElementById("biasRounds"),
+        biasThreshold: document.getElementById("biasThreshold"),
+        wFreq: document.getElementById("wFreq"),
+        wSeq: document.getElementById("wSeq"),
+
+        planX: document.getElementById("planX"),
+        btnRunPlan: document.getElementById("btnRunPlan"),
+        planSummary: document.getElementById("planSummary"),
+
+        btnExport: document.getElementById("btnExport"),
+        btnCopyExport: document.getElementById("btnCopyExport"),
+        btnImport: document.getElementById("btnImport"),
+        btnClearIO: document.getElementById("btnClearIO"),
+        ioBox: document.getElementById("ioBox"),
+
+        toast: document.getElementById("toast"),
+        toastIcon: document.getElementById("toastIcon"),
+        toastA: document.getElementById("toastA"),
+        toastB: document.getElementById("toastB"),
+        toastActions: document.getElementById("toastActions"),
+
+        modalBackdrop: document.getElementById("modalBackdrop"),
+        modalTitle: document.getElementById("modalTitle"),
+        modalBody: document.getElementById("modalBody"),
+        modalFooter: document.getElementById("modalFooter"),
+        modalClose: document.getElementById("modalClose"),
+      };
+
+      let toastTimer = null;
+      function showToast({title, message, icon="⚡", actions=[], duration=4500}){
+        el.toastIcon.textContent = icon;
+        el.toastA.textContent = title || "";
+        el.toastB.textContent = message || "";
+        el.toastActions.innerHTML = "";
+
+        for(const act of actions){
+          const b = document.createElement("button");
+          b.className = "btn " + (act.kind || "ghost");
+          b.textContent = act.label || "OK";
+          b.addEventListener("click", () => {
+            try{ act.onClick && act.onClick(); }catch(_){}
+            hideToast();
+          });
+          el.toastActions.appendChild(b);
+        }
+
+        el.toast.classList.add("show");
+        if(toastTimer) clearTimeout(toastTimer);
+        if(duration && duration > 0){
+          toastTimer = setTimeout(hideToast, duration);
+        }
+      }
+      function hideToast(){
+        el.toast.classList.remove("show");
+        if(toastTimer) clearTimeout(toastTimer);
+        toastTimer = null;
+      }
+
+      function showModal({title, bodyHTML, footerButtons=[]}){
+        el.modalTitle.textContent = title || "Modal";
+        el.modalBody.innerHTML = bodyHTML || "";
+        el.modalFooter.innerHTML = "";
+        for(const btn of footerButtons){
+          const b = document.createElement("button");
+          b.className = "btn " + (btn.kind || "");
+          b.textContent = btn.label || "OK";
+          b.addEventListener("click", () => {
+            try{ btn.onClick && btn.onClick(); }catch(_){}
+          });
+          el.modalFooter.appendChild(b);
+        }
+        el.modalBackdrop.classList.add("show");
+      }
+      function hideModal(){
+        el.modalBackdrop.classList.remove("show");
+      }
+      el.modalClose.addEventListener("click", hideModal);
+      el.modalBackdrop.addEventListener("click", (e) => {
+        if(e.target === el.modalBackdrop) hideModal();
+      });
+
+      // -----------------------------------------
+      // App state
+      // -----------------------------------------
+      const defaultState = () => ({
+        version: APP_VERSION,
+        globalSeed: "",
+        mineCount: 3,
+        roundIndex: 0, // lifetime rounds for current seed
+        phase: "idle", // idle | teaching
+
+        epoch: {
+          type: "manual",    // daily | weekly | manual
+          startISO: nowISO(),
+          roundsPlayed: 0,   // confirmed rounds in this epoch
+        },
+
+        learning: {
+          mineCounts: new Array(N).fill(0),
+          roundsSeenEpoch: 0,
+          recentMasks: [],
+        },
+
+        ui: {
+          heatmap: true,
+          percentage: false,
+          predmines: true,
+          bestpath: true,
+          autosuggest: false,
+          safeplan: false,
+
+          biasRounds: 20,
+          biasThreshold: 70,
+
+          wFreq: 0.60,
+          wSeq: 0.40,
+
+          planX: 25,
+
+          lastBiasPromptAtRounds: 0,
+        },
+
+        fairness: {
+          score: null,
+          variance: null,
+          simulatedRounds: 200,
+        },
+
+        prediction: {
+          nextRound: 1,
+          trueMask: 0, // internal only
+          risk: new Array(N).fill(0),
+          predMineIdx: [],
+          bestPath: [],
+          userMarksMask: 0,
+          lastPlanReport: "",
+        }
+      });
+
+      let state = defaultState();
+
+      // -----------------------------------------
+      // Storage
+      // -----------------------------------------
+      function persist(){
+        try{
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }catch(_){}
+      }
+
+      function safeRandomSeed(){
+        // readable seed: 16 bytes hex + timestamp suffix
+        const bytes = new Uint8Array(16);
+        if(crypto && crypto.getRandomValues){
+          crypto.getRandomValues(bytes);
+        }else{
+          // fallback if crypto blocked (rare)
+          for(let i=0;i<bytes.length;i++) bytes[i] = (Math.random()*256)|0;
+        }
+        const hex = Array.from(bytes).map(b => b.toString(16).padStart(2,"0")).join("");
+        return `seed-${hex}-${Date.now().toString(16)}`;
+      }
+
+      function load(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(!raw) return false;
+          const parsed = JSON.parse(raw);
+          if(!parsed || typeof parsed !== "object") return false;
+
+          // minimal schema checks + merges
+          state = defaultState();
+          if(typeof parsed.globalSeed === "string") state.globalSeed = parsed.globalSeed;
+          if(isInt(parsed.mineCount)) state.mineCount = clamp(parsed.mineCount, 1, 24);
+          if(isInt(parsed.roundIndex)) state.roundIndex = Math.max(0, parsed.roundIndex|0);
+
+          if(parsed.epoch && typeof parsed.epoch === "object"){
+            const t = parsed.epoch.type;
+            if(t === "daily" || t === "weekly" || t === "manual") state.epoch.type = t;
+            if(typeof parsed.epoch.startISO === "string") state.epoch.startISO = parsed.epoch.startISO;
+            if(isInt(parsed.epoch.roundsPlayed)) state.epoch.roundsPlayed = Math.max(0, parsed.epoch.roundsPlayed|0);
+          }
+
+          if(parsed.learning && typeof parsed.learning === "object"){
+            if(Array.isArray(parsed.learning.mineCounts) && parsed.learning.mineCounts.length === N){
+              state.learning.mineCounts = parsed.learning.mineCounts.map(x => Math.max(0, (x|0)));
+            }
+            if(isInt(parsed.learning.roundsSeenEpoch)) state.learning.roundsSeenEpoch = Math.max(0, parsed.learning.roundsSeenEpoch|0);
+
+            if(Array.isArray(parsed.learning.recentMasks)){
+              state.learning.recentMasks = parsed.learning.recentMasks
+                .map(x => (Number(x)>>>0))
+                .filter(x => Number.isFinite(x))
+                .slice(-MAX_RECENT);
+            }
+          }
+
+          if(parsed.ui && typeof parsed.ui === "object"){
+            const u = parsed.ui;
+            state.ui.heatmap = !!u.heatmap;
+            state.ui.percentage = !!u.percentage;
+            state.ui.predmines = !!u.predmines;
+            state.ui.bestpath = !!u.bestpath;
+            state.ui.autosuggest = !!u.autosuggest;
+            state.ui.safeplan = !!u.safeplan;
+
+            state.ui.biasRounds = clamp((parseInt(u.biasRounds,10)||20), 5, 5000);
+            state.ui.biasThreshold = clamp((parseInt(u.biasThreshold,10)||70), 1, 99);
+
+            state.ui.wFreq = clamp((parseFloat(u.wFreq)||0.60), 0, 1);
+            state.ui.wSeq  = clamp((parseFloat(u.wSeq)||0.40), 0, 1);
+
+            state.ui.planX = clamp((parseInt(u.planX,10)||25), 1, 500);
+
+            state.ui.lastBiasPromptAtRounds = Math.max(0, (parseInt(u.lastBiasPromptAtRounds,10)||0));
+          }
+
+          if(parsed.fairness && typeof parsed.fairness === "object"){
+            const f = parsed.fairness;
+            state.fairness.score = Number.isFinite(f.score) ? f.score : null;
+            state.fairness.variance = Number.isFinite(f.variance) ? f.variance : null;
+            state.fairness.simulatedRounds = clamp((parseInt(f.simulatedRounds,10)||200), 50, 2000);
+          }
+
+          // safety: do not resume mid-teaching with hidden map; reset prediction phase
+          state.phase = "idle";
+          state.prediction = defaultState().prediction;
+          state.prediction.nextRound = state.roundIndex + 1;
+
+          // If no seed, generate one and apply lightly
+          if(!state.globalSeed){
+            state.globalSeed = safeRandomSeed();
+            state.roundIndex = 0;
+            state.epoch.startISO = nowISO();
+            state.epoch.roundsPlayed = 0;
+            state.learning.mineCounts = new Array(N).fill(0);
+            state.learning.roundsSeenEpoch = 0;
+            state.learning.recentMasks = [];
+            state.fairness.score = null;
+            state.fairness.variance = null;
+          }
+
+          persist();
+          return true;
+        }catch(_){
+          return false;
+        }
+      }
+
+      // -----------------------------------------
+      // Epoch handling
+      // -----------------------------------------
+      function epochKeyFor(type, dateObj){
+        const d = dateObj || new Date();
+        if(type === "daily"){
+          return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+        }
+        if(type === "weekly"){
+          // ISO-ish week key (year-W##)
+          const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+          const dayNum = tmp.getUTCDay() || 7;
+          tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+          const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(),0,1));
+          const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+          return `${tmp.getUTCFullYear()}-W${String(weekNo).padStart(2,"0")}`;
+        }
+        return `manual:${state.epoch.startISO}`;
+      }
+
+      function shouldAutoRollEpoch(){
+        if(state.epoch.type === "manual") return false;
+        try{
+          const start = new Date(state.epoch.startISO);
+          const now = new Date();
+          const a = epochKeyFor(state.epoch.type, start);
+          const b = epochKeyFor(state.epoch.type, now);
+          return a !== b;
+        }catch(_){
+          return false;
+        }
+      }
+
+      function startNewEpoch({keepRoundIndex=true} = {}){
+        state.epoch.startISO = nowISO();
+        state.epoch.roundsPlayed = 0;
+
+        state.learning.mineCounts = new Array(N).fill(0);
+        state.learning.roundsSeenEpoch = 0;
+        state.learning.recentMasks = [];
+
+        state.ui.lastBiasPromptAtRounds = 0;
+
+        state.phase = "idle";
+        state.prediction = defaultState().prediction;
+        state.prediction.nextRound = state.roundIndex + 1;
+
+        if(!keepRoundIndex){
+          state.roundIndex = 0;
+          state.prediction.nextRound = 1;
+        }
+
+        persist();
+        renderAll();
+      }
+
+      function maybeAutoRollEpoch(){
+        if(shouldAutoRollEpoch()){
+          // roll epoch (learning reset), but keep roundIndex so boards don't repeat
+          startNewEpoch({keepRoundIndex:true});
+          showToast({
+            title: "Epoch rolled",
+            message: "New epoch started automatically (learning reset, seed kept).",
+            icon: "🗓️",
+            duration: 3800
+          });
+        }
+      }
+
+      // -----------------------------------------
+      // Report builder
+      // -----------------------------------------
+      function topKIndices(arr, k, desc=true){
+        const idx = Array.from({length:arr.length}, (_,i)=>i);
+        idx.sort((a,b) => desc ? (arr[b] - arr[a]) : (arr[a] - arr[b]));
+        return idx.slice(0, k);
+      }
+
+      function detectiveNote({minRisk, maxRisk, pathCost, mismatchWarn, score, mineCount}){
+        const spread = maxRisk - minRisk;
+        const s = Number.isFinite(score) ? score : null;
+        const spicy = s !== null && s < 70;
+
+        const lines = [];
+        if(mismatchWarn){
+          lines.push("Teaching mismatch detected. I learned what you taught anyway.");
+        }
+        if(spicy){
+          lines.push("Seed smells a bit biased. Not accusing it… just side-eyeing.");
+        }else if(s !== null){
+          lines.push("Uniformity seems okay. The vibes are statistically chill.");
+        }else{
+          lines.push("No uniformity scan yet. I’m flying on vibes + data you feed me.");
+        }
+
+        if(spread > 0.20){
+          lines.push("Risk spread is wide — clear danger zones exist.");
+        }else{
+          lines.push("Risk spread is tight — the board is playing coy.");
+        }
+
+        if(pathCost < (mineCount / 25) * 10){
+          lines.push("Left→right route looks relatively safe (for a casino).");
+        }else{
+          lines.push("Best path still looks spicy. Proceed like you’ve got plot armor.");
+        }
+
+        return lines.join(" ");
+      }
+
+      function formatRateGrid(rates){
+        // rates length 25
+        let out = "";
+        for(let r=0;r<GRID;r++){
+          const row = [];
+          for(let c=0;c<GRID;c++){
+            const i = r*GRID + c;
+            row.push(String(Math.round(rates[i]*100)).padStart(3," ") + "%");
+          }
+          out += row.join(" ") + (r<GRID-1 ? "\n" : "");
+        }
+        return out;
+      }
+
+      function renderReport({includePlan=false} = {}){
+        const pr = state.prediction;
+        const hasPred = (state.phase === "teaching");
+
+        const epochStart = fmtDateTime(state.epoch.startISO);
+        const seedShort = state.globalSeed.length > 40 ? (state.globalSeed.slice(0,40) + "…") : state.globalSeed;
+
+        let html = `<b>Detective Report</b><br/>`;
+
+        html += `<div class="small">Seed: <span class="mono">${escapeHTML(seedShort)}</span> • Epoch start: <span class="mono">${escapeHTML(epochStart)}</span> • Epoch rounds: <span class="mono">${state.epoch.roundsPlayed}</span> • Learned: <span class="mono">${state.learning.roundsSeenEpoch}</span></div>`;
+
+        if(!hasPred){
+          html += `<div class="small" style="margin-top:8px">No prediction active. Hit <span class="kbd">Generate Prediction</span> to analyze the next round, then teach me the true mines.</div>`;
+          if(includePlan && pr.lastPlanReport){
+            html += `<div style="margin-top:10px">${pr.lastPlanReport}</div>`;
+          }
+          el.report.innerHTML = html;
+          return;
+        }
+
+        const risk = pr.risk;
+        const minRisk = Math.min(...risk);
+        const maxRisk = Math.max(...risk);
+        const best3 = topKIndices(risk, 3, false);
+        const worst1 = topKIndices(risk, 1, true)[0];
+
+        const pathCoords = pr.bestPath.map(coord).join(" → ");
+        html += `<div style="margin-top:10px"><b>Next round:</b> <span class="mono">${pr.nextRound}</span> • Predicted mines: <span class="mono">${state.mineCount}</span></div>`;
+
+        html += `<div style="margin-top:8px"><b>Best Path (left→right):</b><br/><span class="mono">${escapeHTML(pathCoords || "—")}</span></div>`;
+
+        html += `<div style="margin-top:8px"><b>Best 3 tiles (lowest predicted risk):</b> <span class="mono">${best3.map(coord).join(", ")}</span></div>`;
+        html += `<div style="margin-top:6px"><b>Worst tile (highest predicted risk):</b> <span class="mono">${coord(worst1)}</span></div>`;
+
+        const mostMined = (() => {
+          const counts = state.learning.mineCounts.slice();
+          const idx = Array.from({length:N}, (_,i)=>i);
+          idx.sort((a,b)=>counts[b]-counts[a]);
+          return idx.slice(0,5).map(i => `${coord(i)}:${counts[i]}`).join(", ");
+        })();
+
+        html += `<div style="margin-top:8px"><b>Most mined historically (epoch learning, top 5):</b><br/><span class="mono">${escapeHTML(mostMined || "—")}</span></div>`;
+
+        const score = state.fairness.score;
+        const variance = state.fairness.variance;
+        const scoreTxt = Number.isFinite(score) ? `${score.toFixed(1)}%` : "—";
+        const varTxt = Number.isFinite(variance) ? variance.toExponential(3) : "—";
+
+        html += `<div style="margin-top:10px"><b>Uniformity score:</b> <span class="mono">${scoreTxt}</span> • <b>Variance:</b> <span class="mono">${varTxt}</span></div>`;
+        html += `<div style="margin-top:6px"><b>Min vs max risk spread:</b> <span class="mono">${(minRisk*100).toFixed(1)}%</span> → <span class="mono">${(maxRisk*100).toFixed(1)}%</span> (Δ <span class="mono">${((maxRisk-minRisk)*100).toFixed(1)}%</span>)</div>`;
+
+        const note = detectiveNote({
+          minRisk, maxRisk,
+          pathCost: dijkstraBestPath(risk).cost,
+          mismatchWarn: false,
+          score,
+          mineCount: state.mineCount
+        });
+
+        html += `<div style="margin-top:10px"><b>Detective note:</b> <span class="small">${escapeHTML(note)}</span></div>`;
+
+        if(includePlan && pr.lastPlanReport){
+          html += `<div style="margin-top:12px">${pr.lastPlanReport}</div>`;
+        }
+
+        el.report.innerHTML = html;
+      }
+
+      function escapeHTML(s){
+        return String(s)
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+
+      // -----------------------------------------
+      // Board rendering
+      // -----------------------------------------
+      const tiles = [];
+      function initBoard(){
+        el.board.innerHTML = "";
+        tiles.length = 0;
+
+        for(let i=0;i<N;i++){
+          const t = document.createElement("button");
+          t.type = "button";
+          t.className = "tile";
+          t.setAttribute("aria-label", `Tile ${coord(i)}`);
+          t.dataset.idx = String(i);
+
+          const tagL = document.createElement("div");
+          tagL.className = "tag left";
+          tagL.textContent = "";
+          const tagR = document.createElement("div");
+          tagR.className = "tag right";
+          tagR.textContent = "";
+
+          const center = document.createElement("div");
+          center.className = "center";
+          center.textContent = "";
+
+          t.appendChild(tagL);
+          t.appendChild(tagR);
+          t.appendChild(center);
+
+          t.addEventListener("click", () => handleTileClick(i));
+          el.board.appendChild(t);
+          tiles.push({el: t, tagL, tagR, center});
+        }
+      }
+
+      function renderBoard(){
+        const pr = state.prediction;
+        const isTeaching = state.phase === "teaching";
+
+        const showHeat = state.ui.heatmap && isTeaching;
+        const showPct = state.ui.percentage && isTeaching;
+        const showPred = state.ui.predmines && isTeaching;
+        const showPath = state.ui.bestpath && isTeaching;
+
+        const risk = pr.risk || new Array(N).fill(state.mineCount/N);
+        const predSet = new Set(pr.predMineIdx || []);
+        const pathSet = new Set(pr.bestPath || []);
+
+        for(let i=0;i<N;i++){
+          const tile = tiles[i];
+          const tel = tile.el;
+
+          tel.classList.remove("predMine","path","marked","showCenter","showTagL","showTagR");
+
+          // heatmap background
+          if(showHeat){
+            tel.style = riskBgStyle(risk[i]);
+          }else{
+            tel.style = "";
+          }
+
+          // predicted mines highlight
+          if(showPred && predSet.has(i)){
+            tel.classList.add("predMine");
+            tile.tagL.textContent = "PRED";
+            tel.classList.add("showTagL");
+          }else{
+            tile.tagL.textContent = "";
+          }
+
+          // best path highlight (optionally show step)
+          if(showPath && pathSet.has(i)){
+            tel.classList.add("path");
+            // show step number on the right tag to avoid revealing too much clutter
+            const step = (pr.bestPath || []).indexOf(i);
+            tile.tagR.textContent = step >= 0 ? `#${step+1}` : "PATH";
+            tel.classList.add("showTagR");
+          }else{
+            tile.tagR.textContent = "";
+          }
+
+          // teaching marks
+          const marked = isTeaching && bitHas(pr.userMarksMask>>>0, i);
+          if(marked){
+            tel.classList.add("marked");
+          }
+
+          // center text: percent (if enabled) or blank
+          if(showPct){
+            tel.classList.add("showCenter");
+            const pct = Math.round(risk[i]*100);
+            tile.center.textContent = marked ? "☠" : `${pct}%`;
+          }else{
+            tile.center.textContent = marked ? "☠" : "";
+            if(marked){
+              tel.classList.add("showCenter");
+            }
+          }
+        }
+      }
+
+      // -----------------------------------------
+      // Prediction + Teaching flow (Mode B)
+      // -----------------------------------------
+      function resetPredictionToIdle(){
+        state.phase = "idle";
+        state.prediction = defaultState().prediction;
+        state.prediction.nextRound = state.roundIndex + 1;
+        persist();
+        renderAll();
+      }
+
+      function generatePrediction(){
+        maybeAutoRollEpoch();
+
+        if(!state.globalSeed || !state.globalSeed.trim()){
+          showToast({title:"Seed missing", message:"Apply a global seed first.", icon:"🧪"});
+          return;
+        }
+
+        // Start teaching for next round
+        const nextRound = state.roundIndex + 1;
+        const trueMask = generateMinesMask(state.globalSeed, nextRound, state.mineCount);
+
+        const {risk} = computeFinalRisk(state);
+        const predMineIdx = topKIndices(risk, state.mineCount, true);
+
+        const {path} = dijkstraBestPath(risk);
+
+        state.prediction.nextRound = nextRound;
+        state.prediction.trueMask = trueMask; // internal only
+        state.prediction.risk = risk;
+        state.prediction.predMineIdx = predMineIdx;
+        state.prediction.bestPath = path;
+        state.prediction.userMarksMask = 0;
+
+        state.phase = "teaching";
+
+        persist();
+        renderAll();
+
+        showToast({
+          title: "Prediction generated",
+          message: "Mark the TRUE mines for the next round, then confirm.",
+          icon: "🧠",
+          duration: 4200
+        });
+      }
+
+      function handleTileClick(i){
+        if(state.phase !== "teaching"){
+          // idle: optionally show quick risk for last known prediction (none); keep simple.
+          showToast({
+            title: "Tip",
+            message: "Generate a prediction first, then teach by marking mines.",
+            icon: "💡",
+            duration: 2800
+          });
+          return;
+        }
+
+        const pr = state.prediction;
+        const current = pr.userMarksMask >>> 0;
+        const markedCount = popcount32(current);
+        const isMarked = bitHas(current, i);
+
+        let next = current;
+
+        if(isMarked){
+          next = bitClear(next, i);
+        }else{
+          if(markedCount >= state.mineCount){
+            showToast({
+              title: "Mine limit reached",
+              message: `Unmark one tile first (need exactly ${state.mineCount}).`,
+              icon: "🚫",
+              duration: 3200
+            });
+            return;
+          }
+          next = bitSet(next, i);
+        }
+
+        pr.userMarksMask = next >>> 0;
+
+        // Update confirm button state
+        updateConfirmEnabled();
+
+        persist();
+        renderBoard();
+        renderTopChips();
+      }
+
+      function updateConfirmEnabled(){
+        if(state.phase !== "teaching"){
+          el.btnConfirm.disabled = true;
+          return;
+        }
+        const marked = popcount32(state.prediction.userMarksMask>>>0);
+        el.btnConfirm.disabled = (marked !== state.mineCount);
+      }
+
+      function confirmTeaching(){
+        maybeAutoRollEpoch();
+
+        if(state.phase !== "teaching") return;
+        const pr = state.prediction;
+
+        const userMask = pr.userMarksMask >>> 0;
+        const count = popcount32(userMask);
+        if(count !== state.mineCount){
+          showToast({
+            title: "Not ready",
+            message: `Mark exactly ${state.mineCount} mines to confirm.`,
+            icon: "⚠️",
+            duration: 3200
+          });
+          return;
+        }
+
+        const trueMask = pr.trueMask >>> 0;
+        const mismatch = (userMask !== trueMask);
+
+        // Learning update (always from user input)
+        state.learning.roundsSeenEpoch += 1;
+        for(let i=0;i<N;i++){
+          if(bitHas(userMask, i)) state.learning.mineCounts[i] += 1;
+        }
+        state.learning.recentMasks.push(userMask>>>0);
+        if(state.learning.recentMasks.length > MAX_RECENT){
+          state.learning.recentMasks = state.learning.recentMasks.slice(-MAX_RECENT);
+        }
+
+        // Round advancement
+        state.roundIndex += 1;
+        state.epoch.roundsPlayed += 1;
+
+        // Bias detection (generator-based, aggregate) – after updating roundIndex
+        if(state.ui.autosuggest){
+          maybeBiasDetectionToast();
+        }
+
+        // Reset prediction for next round
+        state.phase = "idle";
+        state.prediction = defaultState().prediction;
+        state.prediction.nextRound = state.roundIndex + 1;
+
+        persist();
+        renderAll();
+
+        if(mismatch){
+          showToast({
+            title: "Teaching mismatch",
+            message: "Teaching differs from generator. Learning updated from user input.",
+            icon: "🕵️",
+            duration: 5200
+          });
+        }else{
+          showToast({
+            title: "Teaching confirmed",
+            message: "Learning updated. Round advanced.",
+            icon: "✅",
+            duration: 3600
+          });
+        }
+      }
+
+      // -----------------------------------------
+      // Bias auto-suggest
+      // -----------------------------------------
+      function maybeBiasDetectionToast(){
+        const X = clamp(parseInt(state.ui.biasRounds,10)||20, 5, 5000);
+        const threshold = clamp(parseInt(state.ui.biasThreshold,10)||70, 1, 99);
+
+        if(state.epoch.roundsPlayed < X) return;
+        if(state.epoch.roundsPlayed % X !== 0) return;
+
+        if(state.ui.lastBiasPromptAtRounds === state.epoch.roundsPlayed) return;
+
+        const {score} = computeEpochGeneratorUniformity(state.globalSeed, state.mineCount, state.epoch.roundsPlayed);
+        state.ui.lastBiasPromptAtRounds = state.epoch.roundsPlayed;
+        persist();
+
+        if(score < threshold){
+          showToast({
+            title: "Bias detected",
+            message: `Seed appears biased (score ${score.toFixed(1)}%). Recommend new seed?`,
+            icon: "⚡",
+            actions: [
+              {label:"Recommend Seed", kind:"primary", onClick: () => recommendSeed()},
+              {label:"Dismiss", kind:"ghost", onClick: () => {}}
+            ],
+            duration: 6500
+          });
+        }
+      }
+
+      // -----------------------------------------
+      // Safe Planning Mode (aggregate only)
+      // -----------------------------------------
+      function runSafePlan(){
+        if(!state.ui.safeplan){
+          showToast({
+            title: "Safe Planning Mode is off",
+            message: "Enable the toggle first to confirm you want aggregate scanning.",
+            icon: "🧷",
+            duration: 4200
+          });
+          return;
+        }
+
+        const X = clamp(parseInt(state.ui.planX,10)||25, 1, 500);
+        const start = state.roundIndex + 1;
+        const end = state.roundIndex + X;
+
+        const counts = new Array(N).fill(0);
+        const pathMasks = [];
+
+        for(let r=start; r<=end; r++){
+          const mask = generateMinesMask(state.globalSeed, r, state.mineCount);
+          for(let i=0;i<N;i++){
+            if(bitHas(mask,i)) counts[i] += 1;
+          }
+
+          // Optional path stability: compute min-mine-cost path using cost=1 if mine else 0
+          const cost = new Array(N);
+          for(let i=0;i<N;i++) cost[i] = bitHas(mask,i) ? 1 : 0;
+          const {path} = dijkstraBestPath(cost);
+          let pm = 0 >>> 0;
+          for(const i of path){
+            pm = bitSet(pm, i);
+          }
+          pathMasks.push(pm>>>0);
+        }
+
+        const rates = counts.map(c => c / X);
+
+        const idx = Array.from({length:N}, (_,i)=>i);
+        idx.sort((a,b)=>rates[a]-rates[b]);
+
+        const top3 = idx.slice(0,3);
+        const worst = idx[idx.length-1];
+
+        // path stability (aggregate)
+        let stability = null;
+        if(pathMasks.length >= 2){
+          let sum = 0;
+          for(let k=1;k<pathMasks.length;k++){
+            const a = pathMasks[k-1]>>>0;
+            const b = pathMasks[k]>>>0;
+            const inter = popcount32((a & b)>>>0);
+            const uni = popcount32((a | b)>>>0);
+            sum += (uni === 0 ? 1 : (inter/uni));
+          }
+          stability = sum / (pathMasks.length - 1);
+        }
+
+        const gridTxt = formatRateGrid(rates);
+
+        const reportHTML = `
+          <div style="margin-top:12px">
+            <b>Safe Planning Mode (aggregate only)</b><br/>
+            <div class="small">Window: rounds <span class="mono">${start}</span> → <span class="mono">${end}</span> (X=<span class="mono">${X}</span>) • Mines=<span class="mono">${state.mineCount}</span></div>
+            <div style="margin-top:8px"><b>Top 3 safest tiles:</b> <span class="mono">${top3.map(coord).join(", ")}</span></div>
+            <div style="margin-top:6px"><b>Worst tile:</b> <span class="mono">${coord(worst)}</span></div>
+            <div style="margin-top:8px"><b>Aggregate mine-rate per tile:</b></div>
+            <pre class="mono" style="margin:8px 0 0; white-space:pre; overflow:auto; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03)">${gridTxt}</pre>
+            <div style="margin-top:8px"><b>Path stability:</b> <span class="mono">${stability === null ? "—" : (stability*100).toFixed(1) + "%"}</span> <span class="small">(avg overlap of optimal low-mine paths)</span></div>
+          </div>
+        `;
+
+        state.prediction.lastPlanReport = reportHTML;
+        persist();
+        renderReport({includePlan:true});
+
+        showToast({
+          title: "Safe plan complete",
+          message: "Aggregate results added to the Detective Report.",
+          icon: "🧭",
+          duration: 4200
+        });
+      }
+
+      // -----------------------------------------
+      // Seed controls
+      // -----------------------------------------
+      function applySeedFromInput(seed){
+        const s = (seed || "").trim();
+        if(!s){
+          showToast({title:"Seed empty", message:"Paste or type a seed first.", icon:"🧪"});
+          return;
+        }
+
+        state.globalSeed = s;
+
+        // Reset epoch + learning (new seed => new sequence => reset roundIndex to 0)
+        state.roundIndex = 0;
+        state.epoch.startISO = nowISO();
+        state.epoch.roundsPlayed = 0;
+
+        state.learning.mineCounts = new Array(N).fill(0);
+        state.learning.roundsSeenEpoch = 0;
+        state.learning.recentMasks = [];
+
+        state.ui.lastBiasPromptAtRounds = 0;
+
+        state.phase = "idle";
+        state.prediction = defaultState().prediction;
+        state.prediction.nextRound = 1;
+
+        // Fairness evaluation
+        const rounds = state.fairness.simulatedRounds || 200;
+        const sim = simulateSeedUniformity(state.globalSeed, state.mineCount, rounds);
+        state.fairness.score = sim.score;
+        state.fairness.variance = sim.variance;
+
+        persist();
+        renderAll();
+
+        showToast({
+          title: "Seed applied",
+          message: `Epoch reset. Uniformity score: ${sim.score.toFixed(1)}%.`,
+          icon: "🧬",
+          duration: 4500
+        });
+      }
+
+      async function pasteSeedFromClipboard(){
+        try{
+          if(!navigator.clipboard || !navigator.clipboard.readText){
+            showToast({
+              title: "Clipboard unavailable",
+              message: "Your browser blocked clipboard access in this context.",
+              icon: "📋",
+              duration: 5200
+            });
+            return;
+          }
+          const t = await navigator.clipboard.readText();
+          if(typeof t === "string" && t.trim()){
+            el.seedInput.value = t.trim();
+            showToast({title:"Pasted", message:"Seed pasted into the input box.", icon:"📋", duration: 2800});
+          }else{
+            showToast({title:"Clipboard empty", message:"No text to paste.", icon:"📋", duration: 2800});
+          }
+        }catch(_){
+          showToast({
+            title: "Clipboard blocked",
+            message: "Permission denied or unsupported context. Paste manually.",
+            icon: "🔒",
+            duration: 5200
+          });
+        }
+      }
+
+      function recommendSeed(){
+        const mineCount = state.mineCount;
+        const candidates = [];
+        for(let i=0;i<7;i++){
+          candidates.push(safeRandomSeed());
+        }
+
+        const results = candidates.map(seed => {
+          const sim = simulateSeedUniformity(seed, mineCount, 200);
+          return {
+            seed,
+            variance: sim.variance,
+            score: sim.score,
+            counts: sim.counts,
+            rounds: sim.rounds
+          };
+        });
+
+        results.sort((a,b) => (a.variance - b.variance) || (b.score - a.score));
+        const best = results[0];
+
+        // Build mini distribution grid for best seed (visual)
+        const expected = mineCount / N;
+        const freqs = best.counts.map(c => c / best.rounds);
+        const diffs = freqs.map(f => f - expected);
+        const maxAbs = Math.max(...diffs.map(d => Math.abs(d))) || 1e-9;
+
+        const miniCells = diffs.map((d, i) => {
+          const z = Math.abs(d) / maxAbs; // 0..1
+          const hue = d >= 0 ? 350 : 140; // above expected => danger-ish, below => green-ish
+          const a = 0.08 + 0.28*z;
+          const bg = `hsla(${hue} 86% 52% / ${a})`;
+          const title = `Tile ${coord(i)}: ${(freqs[i]*100).toFixed(1)}% (Δ ${(d*100).toFixed(1)}%)`;
+          return `<div class="miniCell" style="background:${bg}" title="${escapeHTML(title)}"></div>`;
+        }).join("");
+
+        const rowsHTML = results.map((r, idx) => {
+          const isBest = r.seed === best.seed;
+          return `
+            <tr class="${isBest ? "bestRow" : ""}">
+              <td>${idx+1}</td>
+              <td class="monoCell">${escapeHTML(r.seed)}</td>
+              <td class="monoCell">${r.variance.toExponential(3)}</td>
+              <td class="monoCell">${r.score.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join("");
+
+        const bodyHTML = `
+          <div>
+            Generated 7 crypto-based candidate seeds and evaluated each via a 200-round simulation (tile-frequency variance).
+            The winner is the lowest-variance candidate (ties broken by higher score).
+          </div>
+
+          <div class="seedBox">
+            <b>Recommended seed</b><br/>
+            <span class="monoCell">${escapeHTML(best.seed)}</span><br/>
+            <span class="small">Uniformity score: <span class="mono">${best.score.toFixed(1)}%</span> • Variance: <span class="mono">${best.variance.toExponential(3)}</span></span>
+
+            <div class="miniGrid" aria-label="5 by 5 distribution visualization">
+              ${miniCells}
+            </div>
+            <div class="small" style="margin-top:8px">Mini-grid shows deviation from expected mine rate per tile (aggregate only).</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <b>Candidate table</b>
+            <table style="margin-top:8px">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Candidate seed</th>
+                  <th>Variance</th>
+                  <th>Uniformity</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHTML}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        showModal({
+          title: "Seed Recommendation",
+          bodyHTML,
+          footerButtons: [
+            {
+              label: "Apply",
+              kind: "primary",
+              onClick: () => {
+                hideModal();
+                el.seedInput.value = best.seed;
+                applySeedFromInput(best.seed);
+              }
+            },
+            {
+              label: "Copy",
+              kind: "ghost",
+              onClick: async () => {
+                try{
+                  if(navigator.clipboard && navigator.clipboard.writeText){
+                    await navigator.clipboard.writeText(best.seed);
+                    showToast({title:"Copied", message:"Recommended seed copied to clipboard.", icon:"📎", duration: 2800});
+                  }else{
+                    showToast({title:"Copy unavailable", message:"Clipboard API blocked. Copy from the modal text.", icon:"📎", duration: 3800});
+                  }
+                }catch(_){
+                  showToast({title:"Copy failed", message:"Clipboard permission blocked. Copy manually.", icon:"🔒"});
+                }
+              }
+            },
+            { label: "Close", kind: "ghost", onClick: () => hideModal() }
+          ]
+        });
+      }
+
+      // -----------------------------------------
+      // Import / Export
+      // -----------------------------------------
+      function exportJSON(){
+        const payload = {
+          version: APP_VERSION,
+          exportedAt: nowISO(),
+          globalSeed: state.globalSeed,
+          mineCount: state.mineCount,
+          roundIndex: state.roundIndex,
+          epoch: state.epoch,
+          learning: {
+            mineCounts: state.learning.mineCounts,
+            roundsSeenEpoch: state.learning.roundsSeenEpoch,
+            recentMasks: state.learning.recentMasks
+          },
+          ui: state.ui,
+          fairness: state.fairness
+        };
+
+        const text = JSON.stringify(payload, null, 2);
+        el.ioBox.value = text;
+        el.btnCopyExport.disabled = false;
+
+        showToast({
+          title: "Export ready",
+          message: "JSON export written into the box.",
+          icon: "📦",
+          duration: 3200
+        });
+      }
+
+      async function copyExport(){
+        const t = el.ioBox.value || "";
+        if(!t.trim()){
+          showToast({title:"Nothing to copy", message:"Export JSON first.", icon:"📎"});
+          return;
+        }
+        try{
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(t);
+            showToast({title:"Copied", message:"Export JSON copied to clipboard.", icon:"📎", duration: 2800});
+          }else{
+            showToast({title:"Copy unavailable", message:"Clipboard API blocked. Select and copy manually.", icon:"📎"});
+          }
+        }catch(_){
+          showToast({title:"Copy failed", message:"Clipboard permission blocked. Copy manually.", icon:"🔒"});
+        }
+      }
+
+      function validateImport(obj){
+        if(!obj || typeof obj !== "object") return {ok:false, error:"Invalid JSON object."};
+        if(typeof obj.version !== "string") return {ok:false, error:"Missing version."};
+
+        if(typeof obj.globalSeed !== "string" || !obj.globalSeed.trim()) return {ok:false, error:"Missing globalSeed."};
+        const mc = parseInt(obj.mineCount,10);
+        if(!isInt(mc) || mc < 1 || mc > 24) return {ok:false, error:"mineCount must be 1–24."};
+
+        const ri = parseInt(obj.roundIndex,10);
+        if(!isInt(ri) || ri < 0) return {ok:false, error:"roundIndex must be >= 0."};
+
+        if(!obj.epoch || typeof obj.epoch !== "object") return {ok:false, error:"Missing epoch."};
+        const et = obj.epoch.type;
+        if(!(et === "daily" || et === "weekly" || et === "manual")) return {ok:false, error:"epoch.type invalid."};
+        if(typeof obj.epoch.startISO !== "string") return {ok:false, error:"epoch.startISO missing."};
+        const er = parseInt(obj.epoch.roundsPlayed,10);
+        if(!isInt(er) || er < 0) return {ok:false, error:"epoch.roundsPlayed invalid."};
+
+        if(!obj.learning || typeof obj.learning !== "object") return {ok:false, error:"Missing learning."};
+        if(!Array.isArray(obj.learning.mineCounts) || obj.learning.mineCounts.length !== N) return {ok:false, error:"learning.mineCounts must be length 25."};
+        const rse = parseInt(obj.learning.roundsSeenEpoch,10);
+        if(!isInt(rse) || rse < 0) return {ok:false, error:"learning.roundsSeenEpoch invalid."};
+        if(!Array.isArray(obj.learning.recentMasks)) return {ok:false, error:"learning.recentMasks missing."};
+
+        if(!obj.ui || typeof obj.ui !== "object") return {ok:false, error:"Missing ui."};
+
+        return {ok:true};
+      }
+
+      function importJSON(){
+        const raw = el.ioBox.value || "";
+        if(!raw.trim()){
+          showToast({title:"Nothing to import", message:"Paste JSON into the box first.", icon:"📥"});
+          return;
+        }
+
+        let obj;
+        try{
+          obj = JSON.parse(raw);
+        }catch(_){
+          showToast({title:"Invalid JSON", message:"Could not parse JSON. Check formatting.", icon:"⚠️", duration: 5200});
+          return;
+        }
+
+        const val = validateImport(obj);
+        if(!val.ok){
+          showToast({title:"Import refused", message: val.error, icon:"⛔", duration: 6500});
+          return;
+        }
+
+        // Restore state from import while preserving safety (no mid-teaching)
+        state = defaultState();
+        state.globalSeed = obj.globalSeed.trim();
+        state.mineCount = clamp(parseInt(obj.mineCount,10), 1, 24);
+        state.roundIndex = Math.max(0, parseInt(obj.roundIndex,10));
+
+        state.epoch.type = obj.epoch.type;
+        state.epoch.startISO = obj.epoch.startISO;
+        state.epoch.roundsPlayed = Math.max(0, parseInt(obj.epoch.roundsPlayed,10));
+
+        state.learning.mineCounts = obj.learning.mineCounts.map(x => Math.max(0, parseInt(x,10)||0));
+        state.learning.roundsSeenEpoch = Math.max(0, parseInt(obj.learning.roundsSeenEpoch,10));
+        state.learning.recentMasks = obj.learning.recentMasks
+          .map(x => (Number(x)>>>0))
+          .filter(x => Number.isFinite(x))
+          .slice(-MAX_RECENT);
+
+        const u = obj.ui;
+        state.ui.heatmap = !!u.heatmap;
+        state.ui.percentage = !!u.percentage;
+        state.ui.predmines = !!u.predmines;
+        state.ui.bestpath = !!u.bestpath;
+        state.ui.autosuggest = !!u.autosuggest;
+        state.ui.safeplan = !!u.safeplan;
+
+        state.ui.biasRounds = clamp(parseInt(u.biasRounds,10)||20, 5, 5000);
+        state.ui.biasThreshold = clamp(parseInt(u.biasThreshold,10)||70, 1, 99);
+
+        state.ui.wFreq = clamp(parseFloat(u.wFreq)||0.60, 0, 1);
+        state.ui.wSeq  = clamp(parseFloat(u.wSeq)||0.40, 0, 1);
+
+        state.ui.planX = clamp(parseInt(u.planX,10)||25, 1, 500);
+        state.ui.lastBiasPromptAtRounds = Math.max(0, parseInt(u.lastBiasPromptAtRounds,10)||0);
+
+        if(obj.fairness && typeof obj.fairness === "object"){
+          state.fairness.simulatedRounds = clamp(parseInt(obj.fairness.simulatedRounds,10)||200, 50, 2000);
+          state.fairness.score = Number.isFinite(obj.fairness.score) ? obj.fairness.score : null;
+          state.fairness.variance = Number.isFinite(obj.fairness.variance) ? obj.fairness.variance : null;
+        }
+
+        state.phase = "idle";
+        state.prediction = defaultState().prediction;
+        state.prediction.nextRound = state.roundIndex + 1;
+
+        persist();
+        renderAll();
+
+        showToast({title:"Import successful", message:"State restored from JSON.", icon:"✅", duration: 3800});
+      }
+
+      // -----------------------------------------
+      // UI: toggles and inputs
+      // -----------------------------------------
+      function bindToggles(){
+        const toggleEls = document.querySelectorAll(".toggle");
+        toggleEls.forEach(t => {
+          t.addEventListener("click", () => {
+            const key = t.dataset.key;
+            if(!key) return;
+
+            state.ui[key] = !state.ui[key];
+            t.dataset.on = state.ui[key] ? "true" : "false";
+
+            // sync checkboxes
+            if(key === "heatmap") el.tgHeatmap.checked = !!state.ui.heatmap;
+            if(key === "percentage") el.tgPercent.checked = !!state.ui.percentage;
+            if(key === "predmines") el.tgPredMines.checked = !!state.ui.predmines;
+            if(key === "bestpath") el.tgBestPath.checked = !!state.ui.bestpath;
+            if(key === "autosuggest") el.tgAutoSuggest.checked = !!state.ui.autosuggest;
+            if(key === "safeplan") el.tgSafePlan.checked = !!state.ui.safeplan;
+
+            persist();
+            renderAll();
+          });
+        });
+      }
+
+      function syncControlsFromState(){
+        el.seedInput.value = state.globalSeed || "";
+        el.mineCount.value = String(state.mineCount);
+        el.epochType.value = state.epoch.type;
+
+        el.tgHeatmap.checked = !!state.ui.heatmap;
+        el.tgPercent.checked = !!state.ui.percentage;
+        el.tgPredMines.checked = !!state.ui.predmines;
+        el.tgBestPath.checked = !!state.ui.bestpath;
+        el.tgAutoSuggest.checked = !!state.ui.autosuggest;
+        el.tgSafePlan.checked = !!state.ui.safeplan;
+
+        document.querySelectorAll(".toggle").forEach(t => {
+          const k = t.dataset.key;
+          if(!k) return;
+          t.dataset.on = state.ui[k] ? "true" : "false";
+        });
+
+        el.biasRounds.value = String(state.ui.biasRounds);
+        el.biasThreshold.value = String(state.ui.biasThreshold);
+
+        el.wFreq.value = String(state.ui.wFreq.toFixed(2));
+        el.wSeq.value = String(state.ui.wSeq.toFixed(2));
+
+        el.planX.value = String(state.ui.planX);
+
+        el.planSummary.textContent = state.ui.safeplan
+          ? "Aggregate scanning enabled. Run Safe Plan to append the results into the report."
+          : "Enable Safe Planning Mode toggle, then run scan. Output is aggregate only (no per-round spoilers).";
+      }
+
+      function renderTopChips(){
+        el.roundIndexText.textContent = String(state.roundIndex);
+        el.nextRoundText.textContent = String(state.roundIndex + 1);
+        el.mineCountText.textContent = String(state.mineCount);
+
+        const marked = state.phase === "teaching" ? popcount32(state.prediction.userMarksMask>>>0) : 0;
+        el.markedText.textContent = String(marked);
+        el.markedNeedText.textContent = String(state.mineCount);
+
+        el.epochTypeChip.textContent = state.epoch.type[0].toUpperCase() + state.epoch.type.slice(1);
+        el.epochRoundsText.textContent = String(state.epoch.roundsPlayed);
+
+        const score = state.fairness.score;
+        const variance = state.fairness.variance;
+        el.uniformText.textContent = Number.isFinite(score) ? `${score.toFixed(1)}%` : "—";
+        el.varText.textContent = Number.isFinite(variance) ? variance.toExponential(3) : "—";
+
+        el.epochMetaText.textContent = `${state.epoch.type} • start ${fmtDateTime(state.epoch.startISO)}`;
+      }
+
+      function renderStatus(){
+        if(state.phase === "teaching"){
+          el.statusText.textContent = "Teaching";
+          el.boardSubtitle.textContent = "Teaching Phase: mark TRUE mines for the next round, then confirm.";
+        }else{
+          el.statusText.textContent = "Idle";
+          el.boardSubtitle.textContent = "Tap “Generate Prediction” to enter teaching mode for the next round.";
+        }
+      }
+
+      function renderAll(){
+        syncControlsFromState();
+        renderTopChips();
+        renderStatus();
+        renderBoard();
+        renderReport({includePlan:true});
+        updateConfirmEnabled();
+      }
+
+      // -----------------------------------------
+      // Wire up UI events
+      // -----------------------------------------
+      function bindEvents(){
+        el.btnPredict.addEventListener("click", generatePrediction);
+        el.btnConfirm.addEventListener("click", confirmTeaching);
+
+        el.btnApplySeed.addEventListener("click", () => applySeedFromInput(el.seedInput.value));
+        el.btnPasteSeed.addEventListener("click", pasteSeedFromClipboard);
+        el.btnRecommendSeed.addEventListener("click", () => recommendSeed());
+
+        el.mineCount.addEventListener("change", () => {
+          const mc = clamp(parseInt(el.mineCount.value,10)||3, 1, 24);
+          state.mineCount = mc;
+
+          // refresh fairness scan for current seed & new mineCount (does not reset epoch/roundIndex)
+          const sim = simulateSeedUniformity(state.globalSeed, state.mineCount, state.fairness.simulatedRounds || 200);
+          state.fairness.score = sim.score;
+          state.fairness.variance = sim.variance;
+
+          // reset prediction view safely
+          resetPredictionToIdle();
+
+          showToast({
+            title: "Mine count updated",
+            message: `Fairness recalculated for ${mc} mines.`,
+            icon: "🎛️",
+            duration: 3800
+          });
+        });
+
+        el.epochType.addEventListener("change", () => {
+          const t = el.epochType.value;
+          if(t === "daily" || t === "weekly" || t === "manual"){
+            state.epoch.type = t;
+            persist();
+            renderAll();
+            showToast({title:"Epoch type set", message:`Epoch type: ${t}.`, icon:"🗓️", duration: 2800});
+          }
+        });
+
+        el.btnNewEpoch.addEventListener("click", () => {
+          startNewEpoch({keepRoundIndex:true});
+          showToast({title:"New epoch started", message:"Learning reset. Round index preserved.", icon:"🧼", duration: 3800});
+        });
+
+        el.btnResetView.addEventListener("click", () => {
+          resetPredictionToIdle();
+          showToast({title:"View reset", message:"Prediction cleared; ready for next analysis.", icon:"🧽", duration: 2800});
+        });
+
+        el.biasRounds.addEventListener("change", () => {
+          state.ui.biasRounds = clamp(parseInt(el.biasRounds.value,10)||20, 5, 5000);
+          persist();
+        });
+        el.biasThreshold.addEventListener("change", () => {
+          state.ui.biasThreshold = clamp(parseInt(el.biasThreshold.value,10)||70, 1, 99);
+          persist();
+        });
+
+        const weightHandler = () => {
+          state.ui.wFreq = clamp(parseFloat(el.wFreq.value)||0.60, 0, 1);
+          state.ui.wSeq  = clamp(parseFloat(el.wSeq.value)||0.40, 0, 1);
+          persist();
+          // If teaching active, refresh prediction surface (does not change true mask)
+          if(state.phase === "teaching"){
+            const {risk} = computeFinalRisk(state);
+            state.prediction.risk = risk;
+            state.prediction.predMineIdx = topKIndices(risk, state.mineCount, true);
+            state.prediction.bestPath = dijkstraBestPath(risk).path;
+            persist();
+            renderAll();
+          }
+        };
+        el.wFreq.addEventListener("change", weightHandler);
+        el.wSeq.addEventListener("change", weightHandler);
+
+        el.planX.addEventListener("change", () => {
+          state.ui.planX = clamp(parseInt(el.planX.value,10)||25, 1, 500);
+          persist();
+        });
+        el.btnRunPlan.addEventListener("click", runSafePlan);
+
+        el.btnExport.addEventListener("click", exportJSON);
+        el.btnCopyExport.addEventListener("click", copyExport);
+        el.btnImport.addEventListener("click", importJSON);
+        el.btnClearIO.addEventListener("click", () => {
+          el.ioBox.value = "";
+          el.btnCopyExport.disabled = true;
+          showToast({title:"Cleared", message:"JSON box cleared.", icon:"🧹", duration: 2200});
+        });
+
+        // basic auto-roll check on visibility change
+        document.addEventListener("visibilitychange", () => {
+          if(document.visibilityState === "visible"){
+            maybeAutoRollEpoch();
+            renderAll();
+          }
+        });
+      }
+
+      // -----------------------------------------
+      // Boot
+      // -----------------------------------------
+      initBoard();
+      bindToggles();
+      bindEvents();
+
+      const loaded = load();
+      if(!loaded){
+        state = defaultState();
+        state.globalSeed = safeRandomSeed();
+        // initial fairness scan
+        const sim = simulateSeedUniformity(state.globalSeed, state.mineCount, 200);
+        state.fairness.score = sim.score;
+        state.fairness.variance = sim.variance;
+        persist();
+      }
+
+      // ensure UI settings reflect state
+      renderAll();
+
+      showToast({
+        title: "Ready",
+        message: "Seed loaded. Generate a prediction to begin Mode B teaching.",
+        icon: "🎰",
+        duration: 3600
+      });
+
+    })();
+  </script>
 </body>
 </html>
