@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inside the Machine — A Conceptual Computer & LLM Visualizer</title>
+  <style>
+    :root {
+      --bg: #071018;
+      --panel: #0d1724;
+      --panel2: #101d2d;
+      --line: #1d3550;
+      --text: #dbeafe;
+      --muted: #93a8c3;
+      --accent: #56d4ff;
+      --accent2: #9b7bff;
+      --good: #58f29c;
+      --warn: #ffd166;
+      --bad: #ff6b6b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(86,212,255,0.08), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(155,123,255,0.08), transparent 24%),
+        linear-gradient(180deg, #050b12 0%, #08121c 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1400px, 96vw);
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 1000px;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .topbar, .grid, .bottom {
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar { grid-template-columns: 1.3fr 1fr; }
+    .grid { grid-template-columns: 2fr 1fr; margin-top: 16px; }
+    .bottom { grid-template-columns: 1fr 1fr 1fr; margin-top: 16px; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(13,23,36,0.95), rgba(10,19,31,0.95));
+      border: 1px solid rgba(86,212,255,0.14);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+
+    .card h2, .card h3 { margin-top: 0; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .controls .row, .single-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    button, select, input[type="range"], textarea {
+      border-radius: 12px;
+      border: 1px solid rgba(147,168,195,0.18);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(86,212,255,0.48);
+      background: rgba(86,212,255,0.08);
+    }
+
+    button.active {
+      background: linear-gradient(90deg, rgba(86,212,255,0.18), rgba(155,123,255,0.18));
+      border-color: rgba(86,212,255,0.6);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 96px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .tiny {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 580px;
+      display: block;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(3,8,14,0.95), rgba(5,12,21,0.98));
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .status-box {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .value {
+      font-size: 1.2rem;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .log {
+      height: 190px;
+      overflow: auto;
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .log div { margin-bottom: 6px; }
+
+    .meter {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.15s linear;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .token-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .token {
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      background: rgba(86,212,255,0.08);
+      border: 1px solid rgba(86,212,255,0.22);
+    }
+
+    .prompt-row { margin-top: 12px; }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1100px) {
+      .topbar, .grid, .bottom { grid-template-columns: 1fr; }
+      #simCanvas { height: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Inside the Machine</h1>
+    <div class="subtitle">
+      A playable conceptual visualization of how modern computers and AI systems process the world. This is not a literal dump of hidden model thoughts — it’s a grounded, simplified simulation of signals, scheduling, memory, tokenization, attention, probabilities, and output streaming.
+    </div>
+
+    <div class="topbar">
+      <div class="card">
+        <h2>Control Deck</h2>
+        <div class="controls">
+          <div>
+            <div class="row">
+              <button id="modeIdle" class="active">Idle Computer</button>
+              <button id="modeCommand">Execute Command</button>
+              <button id="modeLLM">LLM Mode</button>
+            </div>
+            <div class="single-row">
+              <button id="playPause">Pause</button>
+              <button id="injectNoise">Inject Noise</button>
+              <button id="stabilize">Stabilize</button>
+              <button id="demoSequence">Run Demo</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Simulation Speed</div>
+            <input id="speed" type="range" min="0.5" max="2.5" step="0.1" value="1.2" />
+            <div class="tiny">Higher speed = more packets, faster clocks, more dramatic chaos.</div>
+          </div>
+        </div>
+
+        <div class="prompt-row">
+          <div class="label">Type a command or prompt</div>
+          <textarea id="userInput">Explain why the sky looks blue, then compare it to a computer interpreting light as data.</textarea>
+          <div class="single-row" style="margin-top:10px;">
+            <button id="submitInput">Send Into System</button>
+            <button id="randomize">Random Prompt</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What the system is “feeling”</h2>
+        <div id="feelingText" class="tiny" style="font-size:1rem; line-height:1.6; color: var(--text);">
+          Low-activity scan state. Tiny electrical changes ripple through circuits. Nothing mystical — just clocks ticking, memory refreshing, interrupts waiting, fans deciding whether today is a chill day.
+        </div>
+        <div class="meter"><div class="fill" id="activityFill"></div></div>
+        <div class="legend">
+          <span><span class="dot" style="background: var(--accent)"></span>Signals</span>
+          <span><span class="dot" style="background: var(--good)"></span>Useful work</span>
+          <span><span class="dot" style="background: var(--warn)"></span>Queue pressure</span>
+          <span><span class="dot" style="background: var(--accent2)"></span>LLM token flow</span>
+          <span><span class="dot" style="background: var(--bad)"></span>Noise / confusion</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <canvas id="simCanvas" width="1100" height="580"></canvas>
+      </div>
+      <div class="card">
+        <h2>Telemetry</h2>
+        <div class="status-box">
+          <div class="stat"><div class="label">Clock</div><div class="value" id="clockRate">3.20 GHz</div></div>
+          <div class="stat"><div class="label">Bus Load</div><div class="value" id="busLoad">12%</div></div>
+          <div class="stat"><div class="label">Memory Pressure</div><div class="value" id="memoryPressure">18%</div></div>
+          <div class="stat"><div class="label">Token Focus</div><div class="value" id="tokenFocus">0.00</div></div>
+          <div class="stat"><div class="label">Queue Depth</div><div class="value" id="queueDepth">2</div></div>
+          <div class="stat"><div class="label">Generated Output</div><div class="value" id="generatedCount">0</div></div>
+        </div>
+        <h3 style="margin-top:16px;">Event Log</h3>
+        <div class="log" id="eventLog"></div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="card">
+        <h3>Tokenization</h3>
+        <div class="tiny">An LLM does not read a prompt like a human reading a sentence. It converts text into chunks called tokens, turns them into vectors, compares patterns, and predicts what token should come next.</div>
+        <div class="token-list" id="tokenList" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <h3>Execution Layers</h3>
+        <div id="layerText" class="tiny" style="line-height:1.6; font-size:0.97rem; color:var(--text);">
+          Layer 0: Idle loops, timers, interrupts, background housekeeping.
+        </div>
+      </div>
+      <div class="card">
+        <h3>Mini Objective</h3>
+        <div class="tiny" id="objectiveText" style="font-size:0.97rem; color:var(--text); line-height:1.6;">
+          Keep the machine stable while still making progress. Too much noise raises confusion. Too little activity means no useful work gets done. Welcome to computing: organized panic in a nice shirt.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Tip: switch between Idle Computer, Execute Command, and LLM Mode, then hit <strong>Send Into System</strong>. You can also click inside the canvas to spawn a burst of attention or signal traffic. This simulation is designed to teach intuition, not claim literal access to private model chain-of-thought.
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      modeIdle: document.getElementById('modeIdle'),
+      modeCommand: document.getElementById('modeCommand'),
+      modeLLM: document.getElementById('modeLLM'),
+      playPause: document.getElementById('playPause'),
+      injectNoise: document.getElementById('injectNoise'),
+      stabilize: document.getElementById('stabilize'),
+      demoSequence: document.getElementById('demoSequence'),
+      submitInput: document.getElementById('submitInput'),
+      randomize: document.getElementById('randomize'),
+      speed: document.getElementById('speed'),
+      userInput: document.getElementById('userInput'),
+      eventLog: document.getElementById('eventLog'),
+      tokenList: document.getElementById('tokenList'),
+      layerText: document.getElementById('layerText'),
+      feelingText: document.getElementById('feelingText'),
+      activityFill: document.getElementById('activityFill'),
+      clockRate: document.getElementById('clockRate'),
+      busLoad: document.getElementById('busLoad'),
+      memoryPressure: document.getElementById('memoryPressure'),
+      tokenFocus: document.getElementById('tokenFocus'),
+      queueDepth: document.getElementById('queueDepth'),
+      generatedCount: document.getElementById('generatedCount'),
+      objectiveText: document.getElementById('objectiveText')
+    };
+
+    const randomPrompts = [
+      'Sort these names alphabetically and detect duplicates.',
+      'Write a funny response to a friend who forgot my birthday.',
+      'Describe how a processor turns a button click into visible action.',
+      'Predict the next word after: The machine began to',
+      'Explain memory, cache, storage, and why they are always beefing.'
+    ];
+
+    const state = {
+      mode: 'idle',
+      running: true,
+      speed: 1.2,
+      t: 0,
+      noise: 0.08,
+      activity: 0.12,
+      busLoad: 0.12,
+      memPressure: 0.18,
+      focus: 0,
+      queue: 2,
+      outputCount: 0,
+      packets: [],
+      pulses: [],
+      tokens: [],
+      generated: [],
+      log: [],
+      demoTimeouts: [],
+      phase: 0,
+      commandProgress: 0,
+      llmProgress: 0
+    };
+
+    function addLog(text) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      state.log.unshift(`[${time}] ${text}`);
+      state.log = state.log.slice(0, 30);
+      ui.eventLog.innerHTML = state.log.map(item => `<div>${item}</div>`).join('');
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      [ui.modeIdle, ui.modeCommand, ui.modeLLM].forEach(b => b.classList.remove('active'));
+      if (mode === 'idle') {
+        ui.modeIdle.classList.add('active');
+        state.activity = 0.12;
+        state.focus = 0;
+        state.queue = 2;
+        state.outputCount = 0;
+        ui.layerText.textContent = 'Layer 0: Idle loops, timers, interrupts, cache refresh, thermal checks, waiting for input.';
+        ui.feelingText.textContent = 'Low-activity scan state. Tiny electrical changes ripple through circuits. Nothing mystical — just clocks ticking, memory refreshing, interrupts waiting, fans deciding whether today is a chill day.';
+        ui.objectiveText.textContent = 'Watch background activity. Even “doing nothing” is still doing a lot: timing, refreshing, polling, and staying ready for interrupts.';
+        addLog('Switched to Idle Computer mode.');
+      }
+      if (mode === 'command') {
+        ui.modeCommand.classList.add('active');
+        state.activity = 0.34;
+        state.queue = 4;
+        state.commandProgress = 0;
+        ui.layerText.textContent = 'Layer 1: Input captured → parser interprets intent → scheduler assigns work → memory loads data → processor executes → output path renders result.';
+        ui.feelingText.textContent = 'A request arrived. Buffers wake up, the scheduler starts assigning jobs, memory gets poked, and the machine becomes less “zen garden” and more “airport during a weather delay.”';
+        ui.objectiveText.textContent = 'Feed the machine a command and watch how input fans out across queues, memory, execution, and rendering.';
+        addLog('Switched to Execute Command mode.');
+      }
+      if (mode === 'llm') {
+        ui.modeLLM.classList.add('active');
+        state.activity = 0.42;
+        state.queue = 6;
+        state.llmProgress = 0;
+        ui.layerText.textContent = 'Layer 2: Text → tokens → embeddings → attention over context → probability distribution over next token → repeated generation loop.';
+        ui.feelingText.textContent = 'Not feelings-feelings, but computationally: context pressure rises, token relationships glow, candidate words compete, and the system streams the next most likely continuation one step at a time.';
+        ui.objectiveText.textContent = 'In LLM mode, the goal is to keep context coherent. More noise lowers focus, which makes generated output wobblier.';
+        addLog('Switched to LLM Mode.');
+      }
+    }
+
+    function tokenize(text) {
+      return text
+        .replace(/\n/g, ' ')
+        .split(/(\s+|[,.!?;:()])/)
+        .map(t => t.trim())
+        .filter(Boolean)
+        .slice(0, 22);
+    }
+
+    function renderTokens(tokens) {
+      ui.tokenList.innerHTML = tokens.length
+        ? tokens.map(t => `<span class="token">${escapeHtml(t)}</span>`).join('')
+        : '<span class="tiny">No active tokens yet.</span>';
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function sendInput() {
+      const text = ui.userInput.value.trim();
+      if (!text) return;
+
+      state.tokens = tokenize(text);
+      renderTokens(state.tokens);
+      state.generated = [];
+      state.outputCount = 0;
+      state.queue = Math.max(3, Math.min(12, Math.ceil(text.length / 24)));
+      state.memPressure = Math.min(0.82, 0.16 + text.length / 300);
+
+      if (state.mode === 'idle') {
+        setMode('command');
+      }
+
+      if (state.mode === 'command') {
+        addLog(`Command injected: "${text.slice(0, 70)}${text.length > 70 ? '…' : ''}"`);
+        spawnPackets(30, 'command');
+        state.commandProgress = 0.01;
+      } else if (state.mode === 'llm') {
+        addLog(`Prompt tokenized into ${state.tokens.length} tokens.`);
+        spawnPackets(38, 'llm');
+        state.llmProgress = 0.01;
+      }
+    }
+
+    function spawnPackets(count, type = 'idle', x = null, y = null) {
+      for (let i = 0; i < count; i++) {
+        const originX = x ?? (type === 'llm' ? 120 : 140);
+        const originY = y ?? (type === 'llm' ? 420 : 120 + Math.random() * 260);
+        state.packets.push({
+          x: originX + Math.random() * 10,
+          y: originY + Math.random() * 10,
+          vx: (1 + Math.random() * 2.6) * state.speed,
+          vy: (Math.random() - 0.5) * 1.2,
+          size: 2 + Math.random() * 4,
+          type,
+          life: 70 + Math.random() * 80
+        });
+      }
+    }
+
+    function injectNoise(amount = 0.18) {
+      state.noise = Math.min(0.95, state.noise + amount);
+      state.queue = Math.min(20, state.queue + 2);
+      state.activity = Math.min(1, state.activity + 0.08);
+      spawnPackets(18, 'noise', 250 + Math.random() * 600, 100 + Math.random() * 360);
+      addLog('Noise injected: contention, ambiguity, or messy input increased.');
+    }
+
+    function stabilize(amount = 0.22) {
+      state.noise = Math.max(0, state.noise - amount);
+      state.queue = Math.max(1, state.queue - 2);
+      state.focus = Math.min(1, state.focus + 0.12);
+      addLog('Stabilization applied: cache warmed, ambiguity reduced, scheduler regained the wheel.');
+    }
+
+    function updateMetrics() {
+      ui.clockRate.textContent = `${(3.0 + state.activity * 1.6 + state.noise * 0.2).toFixed(2)} GHz`;
+      ui.busLoad.textContent = `${Math.round(state.busLoad * 100)}%`;
+      ui.memoryPressure.textContent = `${Math.round(state.memPressure * 100)}%`;
+      ui.tokenFocus.textContent = state.focus.toFixed(2);
+      ui.queueDepth.textContent = `${state.queue}`;
+      ui.generatedCount.textContent = `${state.outputCount}`;
+      ui.activityFill.style.width = `${Math.round(state.activity * 100)}%`;
+    }
+
+    function updateSimulation(dt) {
+      state.t += dt * state.speed;
+
+      // Baselines by mode
+      if (state.mode === 'idle') {
+        state.busLoad = lerp(state.busLoad, 0.08 + Math.sin(state.t * 0.5) * 0.015 + state.noise * 0.14, 0.05);
+        state.memPressure = lerp(state.memPressure, 0.15 + state.noise * 0.12, 0.04);
+        state.activity = lerp(state.activity, 0.10 + state.noise * 0.18, 0.04);
+        state.focus = lerp(state.focus, 0.03, 0.03);
+        if (Math.random() < 0.03 * state.speed) spawnPackets(2, 'idle', 80, 90 + Math.random() * 360);
+      }
+
+      if (state.mode === 'command') {
+        state.commandProgress = Math.min(1, state.commandProgress + (0.0038 + (1 - state.noise) * 0.004) * state.speed);
+        state.busLoad = lerp(state.busLoad, 0.26 + state.commandProgress * 0.38 + state.noise * 0.18, 0.05);
+        state.memPressure = lerp(state.memPressure, 0.24 + state.commandProgress * 0.3 + state.noise * 0.1, 0.05);
+        state.activity = lerp(state.activity, 0.36 + state.commandProgress * 0.34 + state.noise * 0.12, 0.05);
+        state.focus = lerp(state.focus, 0.28 + (1 - state.noise) * 0.34, 0.04);
+        if (Math.random() < 0.09 * state.speed) spawnPackets(4, 'command');
+        if (state.commandProgress > 0.25 && state.generated.length < 1) {
+          state.generated.push('parsed');
+          state.outputCount++;
+          addLog('Parser identified structure and probable intent.');
+        }
+        if (state.commandProgress > 0.55 && state.generated.length < 2) {
+          state.generated.push('execute');
+          state.outputCount++;
+          addLog('Scheduler assigned execution units and began work dispatch.');
+        }
+        if (state.commandProgress > 0.92 && state.generated.length < 3) {
+          state.generated.push('render');
+          state.outputCount++;
+          addLog('Result rendered: command path complete.');
+        }
+      }
+
+      if (state.mode === 'llm') {
+        state.llmProgress = Math.min(1, state.llmProgress + (0.0035 + Math.max(0, state.focus) * 0.0025) * state.speed);
+        state.busLoad = lerp(state.busLoad, 0.34 + state.llmProgress * 0.28 + state.noise * 0.2, 0.05);
+        state.memPressure = lerp(state.memPressure, 0.3 + state.tokens.length * 0.012 + state.noise * 0.12, 0.05);
+        state.focus = lerp(state.focus, 0.58 + state.tokens.length * 0.01 - state.noise * 0.45, 0.06);
+        state.focus = clamp(state.focus, 0, 1);
+        state.activity = lerp(state.activity, 0.45 + state.tokens.length * 0.01 + state.noise * 0.1, 0.05);
+        if (Math.random() < 0.12 * state.speed) spawnPackets(6, 'llm');
+
+        const targetOutputs = Math.min(12, Math.max(3, Math.ceil(state.tokens.length / 2)));
+        if (Math.random() < (0.03 + state.focus * 0.05) * state.speed && state.generated.length < targetOutputs) {
+          const candidates = chooseCandidates();
+          const next = candidates[0];
+          state.generated.push(next.word);
+          state.outputCount = state.generated.length;
+          addLog(`Next-token prediction: "${next.word}" selected (p≈${Math.round(next.score * 100)}%).`);
+        }
+      }
+
+      state.noise = lerp(state.noise, Math.max(0.03, state.noise - 0.0008 * state.speed), 0.03);
+      state.queue = clamp(Math.round(1 + state.activity * 8 + state.noise * 6 + (state.mode === 'llm' ? state.tokens.length / 4 : 0)), 1, 24);
+
+      state.packets.forEach(p => {
+        p.x += p.vx * dt * 60;
+        p.y += p.vy * dt * 60;
+        p.life -= dt * 60;
+
+        if (state.mode === 'command') {
+          if (p.x > 290 && p.x < 370) p.vy += (290 - p.y) * 0.0008;
+          if (p.x > 540 && p.x < 640) p.vy += (220 - p.y) * 0.0008;
+          if (p.x > 780) p.vy += (300 - p.y) * 0.0008;
+        }
+        if (state.mode === 'llm') {
+          if (p.x > 280 && p.x < 520) p.vy += (420 - p.y) * 0.0012;
+          if (p.x > 520 && p.x < 760) p.vy += (210 + Math.sin(state.t * 2 + p.x * 0.01) * 80 - p.y) * 0.0011;
+          if (p.x > 760) p.vy += (360 - p.y) * 0.0011;
+        }
+      });
+      state.packets = state.packets.filter(p => p.life > 0 && p.x < canvas.width + 30 && p.y > -30 && p.y < canvas.height + 30);
+
+      updateMetrics();
+    }
+
+    function chooseCandidates() {
+      const base = ['data','pattern','signal','context','meaning','token','response','memory','reasoning','probability','vector','output'];
+      const seeded = state.tokens.length ? [...state.tokens].slice(-4).map(t => t.toLowerCase()) : [];
+      const pool = [...new Set([...seeded, ...base])].filter(Boolean);
+      const scored = pool.map(word => ({
+        word,
+        score: clamp(0.18 + Math.random() * 0.25 + state.focus * 0.42 - state.noise * 0.18, 0.05, 0.97)
+      })).sort((a,b) => b.score - a.score);
+      return scored.slice(0, 4);
+    }
+
+    function drawBackgroundGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(8,15,24,1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.strokeStyle = 'rgba(86,212,255,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.strokeStyle = 'rgba(155,123,255,0.04)';
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function panel(x, y, w, h, title, color='rgba(86,212,255,0.18)') {
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4;
+      roundRect(ctx, x, y, w, h, 16, true, true);
+      ctx.fillStyle = 'rgba(219,234,254,0.92)';
+      ctx.font = '15px Inter, sans-serif';
+      ctx.fillText(title, x + 14, y + 24);
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      if (typeof radius === 'number') radius = {tl: radius, tr: radius, br: radius, bl: radius};
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    function drawIdleMode() {
+      panel(60, 80, 180, 90, 'Input / Sensors');
+      panel(320, 80, 200, 110, 'Scheduler / Interrupts');
+      panel(610, 72, 180, 130, 'CPU Cores');
+      panel(860, 80, 180, 110, 'Memory Refresh');
+      panel(300, 300, 520, 180, 'Background Processes', 'rgba(88,242,156,0.16)');
+
+      drawConnection(240, 125, 320, 135, 0.3);
+      drawConnection(520, 135, 610, 135, 0.4);
+      drawConnection(790, 135, 860, 135, 0.2);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillText('Timers • Polling • Cache checks • Thermal state • Waiting for interrupts', 330, 350);
+    }
+
+    function drawCommandMode() {
+      panel(50, 90, 190, 100, 'User Input');
+      panel(290, 90, 180, 100, 'Parser');
+      panel(520, 180, 180, 100, 'Scheduler');
+      panel(520, 60, 180, 90, 'Memory / Cache');
+      panel(760, 90, 190, 100, 'Execution Units');
+      panel(860, 300, 180, 100, 'Rendered Output');
+      panel(260, 300, 420, 130, 'Queues + Dependencies', 'rgba(255,209,102,0.18)');
+
+      drawConnection(240, 140, 290, 140, 0.7);
+      drawConnection(470, 140, 520, 225, 0.7);
+      drawConnection(610, 180, 610, 150, 0.5);
+      drawConnection(700, 225, 760, 140, 0.8);
+      drawConnection(950, 190, 950, 300, 0.75);
+
+      const p = state.commandProgress;
+      drawProgressBar(278, 404, 380, 10, p, 'Command pipeline');
+      ctx.fillStyle = 'rgba(255,255,255,0.62)';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillText('Capture → Parse → Schedule → Load → Execute → Render', 282, 390);
+    }
+
+    function drawLLMMode() {
+      panel(40, 360, 180, 110, 'Prompt Tokens');
+      panel(270, 360, 210, 110, 'Embeddings');
+      panel(530, 90, 220, 420, 'Attention Arena', 'rgba(155,123,255,0.22)');
+      panel(810, 160, 220, 120, 'Probability Head');
+      panel(810, 360, 220, 110, 'Streamed Output');
+
+      drawConnection(220, 415, 270, 415, 0.85);
+      drawConnection(480, 415, 530, 310, 0.9);
+      drawConnection(750, 300, 810, 220, 0.95);
+      drawConnection(920, 280, 920, 360, 0.8);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillText('Tokens attend to other tokens based on relevance, position, and learned patterns.', 548, 118);
+
+      // attention nodes
+      const nodes = [];
+      for (let i = 0; i < Math.min(10, Math.max(4, state.tokens.length)); i++) {
+        const ang = i / Math.min(10, Math.max(4, state.tokens.length)) * Math.PI * 2 + state.t * 0.3;
+        const nx = 640 + Math.cos(ang) * (110 + Math.sin(state.t + i) * 10);
+        const ny = 300 + Math.sin(ang) * 150;
+        nodes.push({x:nx, y:ny});
+      }
+      nodes.forEach((a, i) => {
+        nodes.forEach((b, j) => {
+          if (j > i && Math.random() < 0.12 + state.focus * 0.18) {
+            ctx.strokeStyle = `rgba(155,123,255,${0.04 + state.focus * 0.2})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        });
+      });
+      nodes.forEach((n, i) => {
+        ctx.fillStyle = `rgba(155,123,255,${0.4 + state.focus * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 5 + Math.sin(state.t * 2 + i) * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const cands = chooseCandidates();
+      cands.forEach((c, i) => {
+        const y = 195 + i * 18;
+        ctx.fillStyle = 'rgba(219,234,254,0.92)';
+        ctx.fillText(c.word, 826, y);
+        drawProgressBar(900, y - 10, 104, 8, c.score, '');
+      });
+
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '15px Inter, sans-serif';
+      const out = state.generated.join(' ').slice(0, 90) || '…waiting for next token';
+      wrapText(out, 826, 392, 180, 20);
+    }
+
+    function drawConnection(x1, y1, x2, y2, intensity = 0.5) {
+      ctx.strokeStyle = `rgba(86,212,255,${0.14 + intensity * 0.4})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function drawProgressBar(x, y, w, h, progress) {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      roundRect(ctx, x, y, w, h, 999, true, false);
+      ctx.fillStyle = 'rgba(86,212,255,0.85)';
+      roundRect(ctx, x, y, w * clamp(progress,0,1), h, 999, true, false);
+    }
+
+    function drawPackets() {
+      state.packets.forEach(p => {
+        let color = '86,212,255';
+        if (p.type === 'command') color = '88,242,156';
+        if (p.type === 'llm') color = '155,123,255';
+        if (p.type === 'noise') color = '255,107,107';
+        const alpha = clamp(p.life / 120, 0.08, 0.95);
+        ctx.fillStyle = `rgba(${color},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawHUD() {
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.font = '14px Inter, sans-serif';
+      ctx.fillText(`Mode: ${state.mode.toUpperCase()}`, 24, 28);
+      ctx.fillText(`Noise: ${state.noise.toFixed(2)}`, 24, 50);
+      ctx.fillText(`Activity: ${state.activity.toFixed(2)}`, 24, 72);
+      ctx.fillText(`Queue: ${state.queue}`, 24, 94);
+    }
+
+    function wrapText(text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      let yy = y;
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && i > 0) {
+          ctx.fillText(line, x, yy);
+          line = words[i] + ' ';
+          yy += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, yy);
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    let last = performance.now();
+    function animate(now) {
+      const dt = Math.min(0.035, (now - last) / 1000);
+      last = now;
+      if (state.running) updateSimulation(dt);
+      drawBackgroundGrid();
+      if (state.mode === 'idle') drawIdleMode();
+      if (state.mode === 'command') drawCommandMode();
+      if (state.mode === 'llm') drawLLMMode();
+      drawPackets();
+      drawHUD();
+      requestAnimationFrame(animate);
+    }
+
+    ui.modeIdle.onclick = () => setMode('idle');
+    ui.modeCommand.onclick = () => setMode('command');
+    ui.modeLLM.onclick = () => setMode('llm');
+    ui.playPause.onclick = () => {
+      state.running = !state.running;
+      ui.playPause.textContent = state.running ? 'Pause' : 'Resume';
+      addLog(state.running ? 'Simulation resumed.' : 'Simulation paused.');
+    };
+    ui.injectNoise.onclick = () => injectNoise();
+    ui.stabilize.onclick = () => stabilize();
+    ui.submitInput.onclick = sendInput;
+    ui.randomize.onclick = () => {
+      ui.userInput.value = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+      addLog('Random prompt loaded.');
+    };
+    ui.speed.oninput = (e) => { state.speed = parseFloat(e.target.value); };
+
+    ui.demoSequence.onclick = () => {
+      state.demoTimeouts.forEach(t => clearTimeout(t));
+      setMode('idle');
+      addLog('Demo started.');
+      state.demoTimeouts = [
+        setTimeout(() => setMode('command'), 1200),
+        setTimeout(() => sendInput(), 2200),
+        setTimeout(() => injectNoise(0.22), 4300),
+        setTimeout(() => stabilize(0.28), 6500),
+        setTimeout(() => setMode('llm'), 8400),
+        setTimeout(() => sendInput(), 9300)
+      ];
+    };
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      spawnPackets(14, state.mode === 'llm' ? 'llm' : state.mode === 'command' ? 'command' : 'idle', x, y);
+      state.focus = clamp(state.focus + 0.05, 0, 1);
+      addLog('Manual signal burst injected via canvas click.');
+    });
+
+    // init
+    renderTokens([]);
+    addLog('System booted. Awaiting input.');
+    setMode('idle');
+    updateMetrics();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
